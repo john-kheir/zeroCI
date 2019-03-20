@@ -9,7 +9,7 @@ class BuildImage(Utils):
     def image_bulid(self, image_name, branch, commit=''):
         """Build docker image with specific branch and commit.
 
-        :param image_name: docker image name 
+        :param image_name: docker image name.
         :type image_name: str
         :param branch: branch name.
         :type branch: str

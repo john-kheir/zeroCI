@@ -2,9 +2,7 @@ from Jumpscale import j
 from subprocess import run, PIPE
 from uuid import uuid4
 import configparser
-import requests
-import base64
-import sys
+import time
 import os
 import re
 ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
@@ -16,12 +14,13 @@ class Utils:
         config.optionxform = str
         config.read('config.ini')
         self.serverip = config['main']['server_ip']
+        self.chat_id = config['main']['chat_id']
         self.access_token = config['github']['access_token']
         self.repo = config['github']['repo']
         self.result_path = config['main']['result_path']
-        self.bot_token = config['telegram']['bot_token']
-        self.chat_id = config['telegram']['chat_id']
         self.exports = self.export_var(config)
+        self.github_cl = j.clients.github('test', token=self.access_token)
+        self.telegram_cl = j.clients.telegram_bot.get("test")
 
     def execute_cmd(self, cmd):
         response = run(cmd, shell=True, universal_newlines=True, stdout=PIPE, stderr=PIPE)
@@ -30,22 +29,30 @@ class Utils:
     def random_string(self):
         return str(uuid4())[:10]
 
-    def send_msg(self, msg, commit=None, committer=None):
+    def send_msg(self, msg, branch=None, commit=None, committer=None):
         """Send Telegram message using Telegram bot.
 
         :param msg: message to be sent.
         :type msg: str
+        :param branch: branch name
+        :type branch: str
         :param commit: commit hash.
         :type commit: str
         :param committer: committer name on github.
         :type committer: str
         """
         if commit:
-            msg = msg + '\n' + committer + '\n' + commit
-        self.telegram_bot_msg_send(chat_id=self.chat_id, text=msg)
+            msg = '\n'.join([msg, branch, committer, commit])
+        for _ in range(0, 10):
+            try:    
+                self.telegram_cl.send_message(chatid=self.chat_id, text=msg)
+                break
+            except Exception:
+                time.sleep(1)
 
     def write_file(self, text, file_name, file_path=''):
         """Write result file.
+
         :param text: text will be written to result file.
         :type text: str
         :param file_name: result file name.
@@ -63,42 +70,45 @@ class Utils:
         with open(file_path, append_write) as f:
             f.write(text + '\n')
 
-    def github_status_send(self, status, file_link, commit):
+    def github_status_send(self, status, link, commit):
         """Change github commit status.
         
         :param status: should be one of [error, failure, pending, success].
         :type status: str
-        :param file_link: the result file link to be accessed through the server.
-        :type file_link: str
+        :param link: the result file link to be accessed through the server.
+        :type link: str
         :param commit: commit hash required to change its status on github.
         :type commit: str
         """
-        data = {"state": status, "description": "JSX-machine for testing",
-                "target_url": file_link, "context": "continuous-integration/0-Test"}
-        url = 'https://api.github.com/repos/{}/statuses/{}?access_token={}'.format(self.repo, commit, self.access_token)
-        requests.post(url, json=data)
+        repo = self.github_cl.api.get_repo(self.repo)
+        commit = repo.get_commit(commit)
+        commit.create_status(state=status, target_url=link, description='JSX-machine for testing',
+                             context='continuous-integration/0-Test')
 
-    def github_get_content(self, commit):
-        """Get file content from github with specific commit.
-        :param commit: commit hash.
-        :type commit: str
+    def github_get_content(self, ref, file_path='0-Test.sh'):
+        """Get file content from github with specific ref.
+
+        :param ref: name of the commit/branch/tag.
+        :type ref: str
+        :param file_path: file path in the repo
+        :type file_path: str
         """
-        url = 'https://api.github.com/repos/{}/contents/0-Test.sh'.format(self.repo)
-        req = requests.get(url, {'ref': commit})
-        if req.status_code == requests.codes.ok:
-            req = req.json()
-            content = base64.b64decode(req['content'])
-            content = content.decode()
-            return content
-        return None
-
-
+        repo = self.github_cl.api.get_repo(self.repo)
+        try:
+            content_b64 = repo.get_contents(file_path, ref=ref)
+        except Exception:
+            return None
+        content = j.data.serializers.base64.decode(content_b64.content)
+        content = content.decode()
+        return content
+    
     def report(self, status, file_name, branch, commit, committer=''):
         """Report the result to github commit status and Telegram chat.
+
         :param status: test status. 
         :type status: str
-        :param file_link: result file link. 
-        :type file_link: str
+        :param file_name: result file name. 
+        :type file_name: str
         :param branch: branch name. 
         :type branch: str
         :param commit: commit hash.
@@ -109,12 +119,12 @@ class Utils:
         file_link = '{}/{}'.format(self.serverip, file_name)
         text = '{}:{}'.format(file_name, status)
         self.write_file(text=text, file_name='status.log', file_path='.')
-        self.github_status_send(status, file_link, commit=commit)
+        self.github_status_send(status=status, link=file_link, commit=commit)
         if status == 'success':
-            self.send_msg('Tests Passed ' + file_link, commit=commit, committer=committer)
+            self.send_msg('Tests Passed ' + file_link, branch=branch, commit=commit, committer=committer)
         elif status == 'failure':
-            self.send_msg('Tests had errors ' + file_link, commit=commit, committer=committer)
-
+            self.send_msg('Tests had errors ' + file_link, branch=branch, commit=commit, committer=committer)
+        
     def export_var(self, config):
         """Prepare environment variables from config file.
 
@@ -126,15 +136,3 @@ class Utils:
             exp = exports.popitem()
             exps = exps + exp[0] + '=' + exp[1] + ' '
         return exps
-
-    def telegram_bot_msg_send(self, chat_id, text, parse_mode=None):
-        """Send message using Telegram bot.
-        """
-        args = {'chat_id': chat_id, 'text': text}
-        if parse_mode is not None:
-            args["parse_mode"] = parse_mode
-
-        tele_api = 'https://api.telegram.org'
-        msg_url = "/bot{}/sendMessage?{}".format(self.bot_token, urlencode(args))
-        url = tele_api + msg_url
-        requests.get(url)
