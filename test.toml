@@ -1,0 +1,6 @@
+[[instruction]]
+instruction_method = "j.data.nacl.configure"
+name = "default"
+sshagent_use = false
+generate = true
+secret = '123'

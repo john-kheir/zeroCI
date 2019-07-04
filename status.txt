@@ -1,0 +1,1 @@
+{"builders": "failure", "builders_log": "http://188.165.233.148:6010/2019-05-29_builders.log", "build": "success", "build_log": "http://188.165.233.148:6010/b1b16a2.log", "tests": "success", "tests_log": "http://188.165.233.148:6010/b1b16a2.log", "black": "failure", "black_log": "http://188.165.233.148:6010/b1b16a2_format.log"}
