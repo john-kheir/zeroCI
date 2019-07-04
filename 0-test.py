@@ -6,10 +6,19 @@ from datetime import datetime
 from db import *
 import os
 import json
-
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+from builders import builders
 
 utils = Utils()
 app = Flask(__name__)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=builders, trigger="cron", hour=18)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 
 def test_run(image_name, id):
