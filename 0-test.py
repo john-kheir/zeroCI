@@ -180,31 +180,50 @@ def mintor():
 
 @app.route("/home")
 def home():
-    repo_runs = RepoRun.objects(repo=utils.repo[0])
-    repo_name = utils.repo[0].split("/")[-1]
+    result = {"repos": [], "projects": []}
+    for repo in utils.repo:
+        repo_runs = RepoRun.objects(repo=repo)
+        repo_name = repo.split("/")[-1]
+        result["repos"].append({"repo_name": repo_name, "branches": []})
 
-    result = {"repos": [{"repo_name": repo_name, "branches": []}], "projects": []}
-    branches = []
-    for repo_run in repo_runs:
-        if repo_run.branch in branches:
+        branches = []
+        for repo_run in repo_runs:
+            if repo_run.branch in branches:
+                continue
+            else:
+                branches.append(repo_run.branch)
+
+        for branch in branches:
+            repo_runs = RepoRun.objects(branch=branch).order_by("-timestamp")
+            details = []
+            for repo_run in repo_runs:
+                details.append(
+                    {
+                        "commit": repo_run.commit,
+                        "committer": repo_run.committer,
+                        "timestamp": repo_run.timestamp,
+                        "status": repo_run.status,
+                        "result": repo_run.result,
+                    }
+                )
+            result["repos"][0]["branches"].append({"branch_name": branch, "details": details})
+
+    projects_name = []
+    projects = ProjectRun.objects()
+    for project in projects:
+        if project.name in projects_name:
             continue
         else:
-            branches.append(repo_run.branch)
+            projects_name.append(project.name)
 
-    for branch in branches:
-        repo_runs = RepoRun.objects(branch=branch)
+    for project in projects_name:
+        project_runs = ProjectRun.objects(name=project).order_by("-timestamp")
         details = []
-        for repo_run in repo_runs:
+        for project_run in project_runs:
             details.append(
-                {
-                    "commit": repo_run.commit,
-                    "committer": repo_run.committer,
-                    "timestamp": repo_run.timestamp,
-                    "status": repo_run.status,
-                    "result": repo_run.result,
-                }
+                {"timestamp": project_run.timestamp, "status": project_run.status, "result": project_run.result}
             )
-        result["repos"][0]["branches"].append({"branch_name": branch, "details": details})
+        result["projects"].append({"name": project, "details": details})
 
     result_json = json.dumps(result)
     return result_json, 200

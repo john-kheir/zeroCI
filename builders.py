@@ -3,15 +3,15 @@ from build_image import BuildImage
 from utils import Utils
 import os
 from datetime import datetime
-from db import *
+from db import ProjectRun
 
 
 test = RunTests()
 
 
-def builders(self):
+def builders():
     image_name = "builders"
-    project = ProjectRun(timestamp=datetime.now().timestamp(), project="builder")
+    project = ProjectRun(timestamp=datetime.now().timestamp(), name="Builders")
     project.save()
     line = "apt-get update; source /sandbox/env.sh; kosmos --instruct /sandbox/code/github/threefoldtech/test.toml;\
          cd /sandbox/code/github/threefoldtech/jumpscaleX/ ;git pull; nosetests-3.4 -v --with-xunit --xunit-file=/test.xml\

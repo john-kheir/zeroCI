@@ -17,7 +17,7 @@ class RepoRun(Document):
 class ProjectRun(Document):
     timestamp = fields.FloatField(required=True)
     status = fields.StringField(min_length=5, max_length=7, default="pending", required=True)
-    project = fields.StringField()
-    result = fields.DictField()
+    name = fields.StringField()
+    result = fields.ListField(default=[])
 
     meta = {"collection": "project"}
