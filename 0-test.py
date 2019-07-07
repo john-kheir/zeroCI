@@ -194,7 +194,7 @@ def home():
                 branches.append(repo_run.branch)
 
         for branch in branches:
-            repo_runs = RepoRun.objects(branch=branch).order_by("-timestamp")
+            repo_runs = RepoRun.objects(repo=repo, branch=branch).order_by("-timestamp")
             details = []
             for repo_run in repo_runs:
                 details.append(
@@ -229,6 +229,34 @@ def home():
     return result_json, 200
 
 
+@app.route("/status")
+def status():
+    project = request.args.get("project")
+    repo = request.args.get("repo")
+    branch = request.args.get("branch")
+    file = request.args.get("file")
+    if project:
+        project_runs = ProjectRun.objects(name=project).order_by("-timestamp")
+        for project_run in project_runs:
+            if project_run.status is not "pending":
+                if project_run.status == "success":
+                    return send_file("{}_passing.svg".format(project), mimetype="image/svg+xml")
+                else:
+                    return send_file("{}_failing.svg".format(project), mimetype="image/svg+xml")
+    elif repo:
+        if not branch:
+            branch = "master"
+        repo_runs = RepoRun.objects(repo=repo, branch=branch).order_by("-timestamp")
+        for repo_run in repo_runs:
+            if repo_run.status is not "pending":
+                if repo_run.status == "success":
+                    return send_file("build_passing.svg", mimetype="image/svg+xml")
+                else:
+                    return send_file("build_failing.svg", mimetype="image/svg+xml")
+
+    return abort(404)
+
+
 if __name__ == "__main__":
-    port = utils.serverip[utils.serverip.rfind(":") + 1 :]
+    port = utils.serverip[utils.serverip.split(":")[-1]]
     app.run("0.0.0.0", port)
