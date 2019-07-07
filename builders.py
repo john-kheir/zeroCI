@@ -18,7 +18,7 @@ def builders():
         --xunit-testsuite-name=Builders Jumpscale/builder/test/ --tc-file=Jumpscale/builder/test/flist/config.ini\
         --tc=itsyou.username:$IYO_USERNAME --tc=itsyou.client_id:$IYO_CLIENT_ID --tc=itsyou.client_secret:$IYO_CLIENT_SECRET\
         --tc=zos_node.node_ip:$ZOS_NODE_IP --tc=zos_node.node_jwt:$JWT"
-    response, file_path = test.run_tests(image_name=image_name, run_cmd=line)
+    response, file_path = test.run_tests(image_name=image_name, run_cmd=line, timeout=13000)
     status = "success"
     if file_path:
         if response.returncode:

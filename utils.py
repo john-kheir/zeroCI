@@ -1,4 +1,4 @@
-from subprocess import run, PIPE
+from subprocess import run, PIPE, Popen, TimeoutExpired, CompletedProcess
 from uuid import uuid4
 import configparser
 import time
@@ -42,10 +42,16 @@ class Utils:
         connect(db=db_name, host=host, port=port)
 
     def execute_cmd(self, cmd, timeout=1800):
-        response = run(
-            cmd, shell=True, universal_newlines=True, stdout=PIPE, stderr=PIPE, encoding="utf-8", timeout=timeout
-        )
-        return response
+        with Popen(cmd, shell=True, universal_newlines=True, stdout=PIPE, stderr=PIPE, encoding="utf-8") as process:
+            try:
+                stdout, stderr = process.communicate(timeout=timeout)
+                retruncode = process.poll()
+            except TimeoutExpired:
+                process.kill()
+                stdout = "Error Timeout Exceeded {}".format(timeout)
+                stderr = ""
+
+        return CompletedProcess(process.args, retruncode, stdout, stderr)
 
     def random_string(self):
         return str(uuid4())[:10]

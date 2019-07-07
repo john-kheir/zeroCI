@@ -258,5 +258,5 @@ def status():
 
 
 if __name__ == "__main__":
-    port = utils.serverip[utils.serverip.split(":")[-1]]
+    port = int(utils.serverip.split(":")[-1])
     app.run("0.0.0.0", port)
