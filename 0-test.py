@@ -1,6 +1,4 @@
 from flask import Flask, request, send_file, render_template, abort, redirect
-from autotest import RunTests
-from build_image import BuildImage
 from utils import Utils
 from datetime import datetime
 from db import *
@@ -9,9 +7,15 @@ import json
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from builders import builders
+from rq import Queue
+from rq.job import Job
+from worker import conn
+from actions import *
 
 utils = Utils()
 app = Flask(__name__)
+
+q = Queue(connection=conn)
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=builders, trigger="cron", hour=18)
@@ -19,111 +23,6 @@ scheduler.start()
 
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
-
-
-def test_run(image_name, id):
-    """Run test aginst the new commit and give report on Telegram chat and github commit status.
-    
-    :param image_name: docker image name.
-    :type image_name: str
-    :param repo: full repo name
-    :type repo: str
-    :param branch: branch name.
-    :type branch: str
-    :param commit: commit hash.
-    :type commit: str
-    :param committer: name of the committer on github.
-    :type committer: str
-    """
-    repo_run = RepoRun.objects.get(id=id)
-    test = RunTests()
-    status = "success"
-    content = test.github_get_content(repo=repo_run.repo, ref=repo_run.commit)
-    if content:
-        lines = content.splitlines()
-        for i, line in enumerate(lines):
-            if line.startswith("#"):
-                continue
-            response, file_path = test.run_tests(image_name=image_name, run_cmd=line)
-            if file_path:
-                if response.returncode:
-                    status = "failure"
-                result = utils.xml_parse(path=file_path, line=line)
-                repo_run.result.append(
-                    {"type": "testsuite", "status": status, "name": result["summary"]["name"], "content": result}
-                )
-            else:
-                if response.returncode:
-                    status = "failure"
-                    name = "cmd {}".format(i + 1)
-                repo_run.result.append({"type": "log", "status": status, "name": name, "content": response.stdout})
-    else:
-
-        repo_run.result.append({"type": "log", "status": status, "name": "No tests", "content": "No tests found"})
-    repo_run.status = status
-    repo_run.save()
-    test.report(id=id)
-
-
-def test_black(image_name, id):
-    """Run test aginst the new commit and give report on Telegram chat and github commit status.
-
-    :param image_name: docker image name.
-    :type image_name: str
-    :param repo: full repo name
-    :type repo: str
-    :param branch: branch name.
-    :type branch: str
-    :param commit: commit hash.
-    :type commit: str
-    """
-    repo_run = RepoRun.objects.get(id=id)
-    test = RunTests()
-    link = test.serverip
-    status = "success"
-
-    response = test.black_test(image_name=image_name)
-    if response.returncode:
-        status = "failure"
-    repo_run.result.append({"type": "log", "status": status, "name": "Black Formatting", "content": response.stdout})
-    repo_run.save()
-    test.github_status_send(
-        status=status, link=link, repo=repo_run.repo, commit=repo_run.commit, context="Black-Formatting"
-    )
-
-
-def build_image(branch, commit, id):
-    """Build a docker image to install application.
-
-    :param branch: branch name.
-    :type branch: str
-    :param commit: commit hash.
-    :type commit: str
-    :param committer: name of the committer on github.
-    :type committer: str
-    """
-    build = BuildImage()
-    image_name = build.random_string()
-    response = build.image_bulid(image_name=image_name, file="Dockerfile", branch=branch, commit=commit)
-    if response.returncode:
-        build.images_clean()
-        repo_run = RepoRun.objects(id=id).first()
-        repo_run.status = "error"
-        repo_run.result.append({"type": "log", "status": "error", "content": response.stdout})
-        repo_run.save()
-        utils.report(id=id)
-        return False
-    return image_name
-
-
-def cal_status(id):
-    repo_run = RepoRun.objects.get(id=id)
-    status = "success"
-    for key in repo_run.result:
-        if key["status"] is not "success":
-            status = key["status"]
-    repo_run.status = status
-    repo_run.save()
 
 
 @app.after_request
@@ -159,13 +58,9 @@ def triggar(**kwargs):
                 repo_run.save()
                 id = str(repo_run.id)
                 utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
-                image_name = build_image(branch=branch, commit=commit, id=id)
-                if image_name:
-                    test_black(image_name=image_name, id=id)
-                    test_run(image_name=image_name, id=id)
-                    cal_status(id=id)
-                    build = BuildImage()
-                    build.images_clean(image_name=image_name)
+
+                job = q.enqueue_call(func=build_and_test, args=(id,), result_ttl=5000)
+                return job.get_id(), 200
 
     return "Done", 201
 
