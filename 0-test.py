@@ -73,55 +73,78 @@ def mintor():
     return str(os.getloadavg()), "200"
 
 
-@app.route("/home")
+@app.route("/")
 def home():
     result = {"repos": [], "projects": []}
     for repo in utils.repo:
-        repo_runs = RepoRun.objects(repo=repo)
-        repo_name = repo.split("/")[-1]
-        result["repos"].append({"repo_name": repo_name, "branches": []})
+        result["repos"].append(repo)
 
-        branches = []
-        for repo_run in repo_runs:
-            if repo_run.branch in branches:
-                continue
-            else:
-                branches.append(repo_run.branch)
-
-        for branch in branches:
-            repo_runs = RepoRun.objects(repo=repo, branch=branch).order_by("-timestamp")
-            details = []
-            for repo_run in repo_runs:
-                details.append(
-                    {
-                        "commit": repo_run.commit,
-                        "committer": repo_run.committer,
-                        "timestamp": repo_run.timestamp,
-                        "status": repo_run.status,
-                        "result": repo_run.result,
-                    }
-                )
-            result["repos"][0]["branches"].append({"branch_name": branch, "details": details})
-
-    projects_name = []
     projects = ProjectRun.objects()
     for project in projects:
-        if project.name in projects_name:
+        if project.name in result["projects"]:
             continue
         else:
-            projects_name.append(project.name)
-
-    for project in projects_name:
-        project_runs = ProjectRun.objects(name=project).order_by("-timestamp")
-        details = []
-        for project_run in project_runs:
-            details.append(
-                {"timestamp": project_run.timestamp, "status": project_run.status, "result": project_run.result}
-            )
-        result["projects"].append({"name": project, "details": details})
+            result["projects"].append(project.name)
 
     result_json = json.dumps(result)
     return result_json, 200
+
+
+@app.route("/repo/<path:repo>/branches")
+def branches(repo):
+    repo_runs = RepoRun.objects(repo=repo)
+    branches = []
+    for repo_run in repo_runs:
+        if repo_run.branch in branches:
+            continue
+        else:
+            branches.append(repo_run.branch)
+    result = json.dumps(branches)
+    return result
+
+
+@app.route("/repo/<path:repo>/tests")
+def branch(repo):
+    branch = request.args.get("branch")
+    id = request.args.get("id")
+    if not branch:
+        return abort("", 400)
+    if branch:
+        if id:
+            repo_run = RepoRun.objects.get(id=id, repo=repo, branch=branch)
+            result = json.dumps(repo_run.result)
+            return result
+
+        repo_runs = RepoRun.objects(repo=repo, branch=branch).order_by("-timestamp")
+        details = []
+        for repo_run in repo_runs:
+            details.append(
+                {
+                    "commit": repo_run.commit,
+                    "committer": repo_run.committer,
+                    "timestamp": repo_run.timestamp,
+                    "status": repo_run.status,
+                    "id": str(repo_run.id),
+                }
+            )
+        result = json.dumps(details)
+        return result
+
+
+@app.route("/project/<project>/tests")
+def project(project):
+    id = request.args.get("id")
+    if id:
+        project_run = ProjectRun.objects.get(id=id)
+        result = json.dumps(project_run.result)
+        return result
+
+    project_runs = ProjectRun.objects(name=project).order_by("-timestamp")
+    details = []
+    for project_run in project_runs:
+        details.append({"timestamp": project_run.timestamp, "status": project_run.status, "id": str(project_run.id)})
+    result = json.dumps(details)
+    return result
 
 
 @app.route("/status")
@@ -131,23 +154,20 @@ def status():
     branch = request.args.get("branch")
     file = request.args.get("file")
     if project:
-        project_runs = ProjectRun.objects(name=project).order_by("-timestamp")
-        for project_run in project_runs:
-            if project_run.status is not "pending":
-                if project_run.status == "success":
-                    return send_file("{}_passing.svg".format(project), mimetype="image/svg+xml")
-                else:
-                    return send_file("{}_failing.svg".format(project), mimetype="image/svg+xml")
+        project_run = ProjectRun.objects(name=project, status__ne="pending").order_by("-timestamp").first()
+        if project_run.status == "success":
+            return send_file("{}_passing.svg".format(project), mimetype="image/svg+xml")
+        else:
+            return send_file("{}_failing.svg".format(project), mimetype="image/svg+xml")
+
     elif repo:
         if not branch:
             branch = "master"
-        repo_runs = RepoRun.objects(repo=repo, branch=branch).order_by("-timestamp")
-        for repo_run in repo_runs:
-            if repo_run.status is not "pending":
-                if repo_run.status == "success":
-                    return send_file("build_passing.svg", mimetype="image/svg+xml")
-                else:
-                    return send_file("build_failing.svg", mimetype="image/svg+xml")
+        repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp")
+        if repo_run.status == "success":
+            return send_file("build_passing.svg", mimetype="image/svg+xml")
+        else:
+            return send_file("build_failing.svg", mimetype="image/svg+xml")
 
     return abort(404)
 
