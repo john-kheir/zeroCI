@@ -76,29 +76,15 @@ def mintor():
 @app.route("/")
 def home():
     result = {"repos": [], "projects": []}
-    for repo in utils.repo:
-        result["repos"].append(repo)
-
-    projects = ProjectRun.objects()
-    for project in projects:
-        if project.name in result["projects"]:
-            continue
-        else:
-            result["projects"].append(project.name)
-
+    result["repos"] = RepoRun.objects.distinct("repo")
+    result["projects"] = ProjectRun.objects.distinct("name")
     result_json = json.dumps(result)
     return result_json, 200
 
 
 @app.route("/repo/<path:repo>/branches")
 def branches(repo):
-    repo_runs = RepoRun.objects(repo=repo)
-    branches = []
-    for repo_run in repo_runs:
-        if repo_run.branch in branches:
-            continue
-        else:
-            branches.append(repo_run.branch)
+    branches = RepoRun.objects(repo=repo).distinct("branch")
     result = json.dumps(branches)
     return result
 

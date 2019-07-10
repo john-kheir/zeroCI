@@ -27,6 +27,7 @@ def test_run(image_name, id):
     if content:
         lines = content.splitlines()
         for i, line in enumerate(lines):
+            status = "success"
             if line.startswith("#"):
                 continue
             response, file_path = test.run_tests(image_name=image_name, run_cmd=line)
@@ -45,9 +46,7 @@ def test_run(image_name, id):
     else:
 
         repo_run.result.append({"type": "log", "status": status, "name": "No tests", "content": "No tests found"})
-    repo_run.status = status
     repo_run.save()
-    test.report(id=id)
 
 
 def test_black(image_name, id):
@@ -66,9 +65,9 @@ def test_black(image_name, id):
     test = RunTests()
     link = test.serverip
     status = "success"
-
-    response = test.black_test(image_name=image_name)
-    if response.returncode:
+    line = "black {} -l 120 -t py37 --exclude 'templates'".format(utils.project_path)
+    response, file = test.run_tests(image_name=image_name, run_cmd=line)
+    if "reformatted" in response.stdout:
         status = "failure"
     repo_run.result.append({"type": "log", "status": status, "name": "Black Formatting", "content": response.stdout})
     repo_run.save()
@@ -104,9 +103,9 @@ def build_image(branch, commit, id):
 def cal_status(id):
     repo_run = RepoRun.objects.get(id=id)
     status = "success"
-    for key in repo_run.result:
-        if key["status"] is not "success":
-            status = key["status"]
+    for result in repo_run.result:
+        if result["status"] != "success":
+            status = result["status"]
     repo_run.status = status
     repo_run.save()
 
@@ -118,5 +117,6 @@ def build_and_test(id):
         test_black(image_name=image_name, id=id)
         test_run(image_name=image_name, id=id)
         cal_status(id=id)
+        utils.report(id=id)
         build = BuildImage()
         build.images_clean(image_name=image_name)

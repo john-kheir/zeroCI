@@ -33,23 +33,6 @@ class RunTests(Utils):
         self.execute_cmd(remove_container, timeout=timeout)
         return response, file_path
 
-    def black_test(self, image_name, timeout=1000):
-        line = "python3.6 /black.py {}".format(self.project_path)
-        container_name = self.random_string()
-
-        docker_cmd = "docker run --name {} -itd {} ".format(container_name, image_name)
-        resposne = self.execute_cmd(docker_cmd)
-        if not resposne.returncode:
-            docker_cp = "docker cp black.py {}:/".format(container_name)
-            self.execute_cmd(docker_cp)
-            run_cmd = "docker exec -it {} /bin/bash -c '{}'".format(container_name, line)
-            run_response = self.execute_cmd(run_cmd)
-            remove_container = "docker rm -f {}".format(container_name)
-            self.execute_cmd(remove_container)
-            return run_response
-        else:
-            return resposne
-
     def image_check(self, image_name):
         """Check if the docker image exist before run tests.
 

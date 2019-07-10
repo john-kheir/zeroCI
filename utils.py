@@ -50,8 +50,9 @@ class Utils:
                 process.kill()
                 stdout = "Error Timeout Exceeded {}".format(timeout)
                 stderr = ""
+                retruncode = 127
 
-        return CompletedProcess(process.args, retruncode, stdout, stderr)
+        return CompletedProcess(process.args, returncode=retruncode, stdout=stdout, stderr=stderr)
 
     def random_string(self):
         return str(uuid4())[:10]
