@@ -1,6 +1,8 @@
 from utils import Utils
 from db import *
 from docker_container import Docker
+import shutil
+import os
 
 
 class Actions(Utils):
@@ -18,10 +20,11 @@ class Actions(Utils):
         """
         container_name = self.random_string()
         docker = Docker()
+        cmd = "/bin/bash -c '{}'".format(run_cmd)
         result, stdout = docker.run(
-            image_name=image_name, name=container_name, command=run_cmd, environment=self.environment, timeout=timeout
+            image_name=image_name, name=container_name, command=cmd, environment=self.environment, timeout=timeout
         )
-        xml_path = docker.copy_from(name=container_name, source_path="/test.xml", target_path="/mnt/log/result")
+        xml_path = docker.copy_from(name=container_name, source_path="/test.xml", target_path=self.result_path)
         docker.remove_container(container_name)
         return result, stdout, xml_path
 
@@ -56,6 +59,9 @@ class Actions(Utils):
                     repo_run.result.append(
                         {"type": "testsuite", "status": status, "name": result["summary"]["name"], "content": result}
                     )
+                    xml_dir = file_path.split("/")[-2]
+                    out_dir = os.path.join(self.result_path, xml_dir)
+                    shutil.rmtree(out_dir)
                 else:
                     if response:
                         status = "failure"
@@ -65,6 +71,7 @@ class Actions(Utils):
 
             repo_run.result.append({"type": "log", "status": status, "name": "No tests", "content": "No tests found"})
         repo_run.save()
+        
 
     def test_black(self, image_name, id):
         """Run test aginst the new commit and give report on Telegram chat and github commit status.

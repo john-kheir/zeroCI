@@ -1,12 +1,11 @@
-from autotest import RunTests
-from build_image import BuildImage
+from actions import Actions
 from utils import Utils
 import os
 from datetime import datetime
 from db import ProjectRun
 
 
-test = RunTests()
+actions = Actions()
 
 
 def builders():
@@ -18,23 +17,23 @@ def builders():
         --xunit-testsuite-name=Builders Jumpscale/builder/test/ --tc-file=Jumpscale/builder/test/flist/config.ini\
         --tc=itsyou.username:$IYO_USERNAME --tc=itsyou.client_id:$IYO_CLIENT_ID --tc=itsyou.client_secret:$IYO_CLIENT_SECRET\
         --tc=zos_node.node_ip:$ZOS_NODE_IP --tc=zos_node.node_jwt:$JWT"
-    response, file_path = test.run_tests(image_name=image_name, run_cmd=line, timeout=13000)
+    response, stdout, file_path = actions.container_run(image_name=image_name, run_cmd=line, timeout=13000)
     status = "success"
     if file_path:
-        if response.returncode:
+        if response:
             status = "failure"
-        result = test.xml_parse(path=file_path, line=line)
+        result = actions.xml_parse(path=file_path, line=line)
         project.result.append(
             {"type": "testsuite", "status": status, "name": result["summary"]["name"], "content": result}
         )
     else:
-        if response.returncode:
+        if response:
             status = "failure"
-        project.result.append({"type": "log", "status": status, "name": "Builders", "content": response.stdout})
+        project.result.append({"type": "log", "status": status, "name": "Builders", "content": stdout})
 
     project.status = status
     project.save()
     if status == "success":
-        test.send_msg("Builders tests passed {}".format(test.serverip))
+        actions.send_msg("Builders tests passed {}".format(actions.serverip))
     else:
-        test.send_msg("Builders tests failed {}".format(test.serverip))
+        actions.send_msg("Builders tests failed {}".format(actions.serverip))

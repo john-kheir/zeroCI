@@ -29,7 +29,7 @@ class Docker:
 
     def logs(self, name):
         log = self.docker_client.api.logs(name, stdout=True, stderr=True)
-        return log
+        return log.decode()
 
     def copy_from(self, name, source_path, target_path):
         try:
@@ -44,7 +44,7 @@ class Docker:
         tar_file = tarfile.open(tarfile_name)
         output_dir = os.path.join(target_path, utils.random_string())
 
-        file_name = target_path.split("/")[-1]
+        file_name = source_path.split("/")[-1]
         tar_file.extract(file_name, path=output_dir)
         os.remove(tarfile_name)
         xml_file_path = os.path.join(output_dir, file_name)

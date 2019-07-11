@@ -33,7 +33,7 @@ class Utils:
         self.db_name = config["db"]["name"]
         self.db_host = config["db"]["host"]
         self.db_port = int(config["db"]["port"])
-        self.exports = self.export_var(config)
+        self.environment = self.export_var(config)
         self.github_cl = Github(self.github_token)
         self.telegram_cl = Bot(self.bot_token)
         self.db_connect(db_name=self.db_name, host=self.db_host, port=self.db_port)
@@ -185,10 +185,11 @@ class Utils:
         :param config: secret stored in config.ini file.
         """
         exports = config["exports"]
-        exps = ""
+        exps = {}
         for _ in exports:
             exp = exports.popitem()
-            exps = exps + "export " + exp[0] + "=" + exp[1] + "; "
+            exps[exp[0]] = exp[1]
+
         return exps
 
     def xml_parse(self, path, line):
