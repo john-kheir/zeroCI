@@ -10,9 +10,10 @@ from builders import builders
 from rq import Queue
 from rq.job import Job
 from worker import conn
-from actions import *
+from actions import Actions
 
 utils = Utils()
+actions = Actions()
 app = Flask(__name__)
 
 q = Queue(connection=conn)
@@ -59,7 +60,7 @@ def triggar(**kwargs):
                 id = str(repo_run.id)
                 utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
 
-                job = q.enqueue_call(func=build_and_test, args=(id,), result_ttl=5000)
+                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000)
                 return job.get_id(), 200
 
     return "Done", 201
@@ -95,7 +96,7 @@ def branch(repo):
     id = request.args.get("id")
     if not branch:
         return abort("", 400)
-    if branch:
+    else:
         if id:
             repo_run = RepoRun.objects.get(id=id, repo=repo, branch=branch)
             result = json.dumps(repo_run.result)
@@ -138,7 +139,7 @@ def status():
     project = request.args.get("project")
     repo = request.args.get("repo")
     branch = request.args.get("branch")
-    file = request.args.get("file")
+    file = request.args.get("file")  # to return the run result
     if project:
         project_run = ProjectRun.objects(name=project, status__ne="pending").order_by("-timestamp").first()
         if project_run.status == "success":
