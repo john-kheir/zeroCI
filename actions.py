@@ -7,16 +7,15 @@ import os
 
 class Actions(Utils):
     def container_run(self, image_name, run_cmd, timeout=1800):
-        """Run tests with specific image and commit.
+        """Run tests with specific image.
 
-        :param image_name: docker image name.
+        :param image_name: docker image tag.
         :type image_name: str
         :param run_cmd: command line that will be run tests. 
         :type run_cmd: str
         :param repo: full repo name
-        :type repo: str
-        :param commit: commit hash 
-        :type commit: str
+        :param timeout: timeout for test.
+        :type timeout: int
         """
         container_name = self.random_string()
         docker = Docker()

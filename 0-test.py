@@ -83,14 +83,14 @@ def home():
     return result_json, 200
 
 
-@app.route("/repo/<path:repo>/branches")
+@app.route("/repos/<path:repo>/branches")
 def branches(repo):
     branches = RepoRun.objects(repo=repo).distinct("branch")
     result = json.dumps(branches)
     return result
 
 
-@app.route("/repo/<path:repo>/tests")
+@app.route("/repos/<path:repo>/tests")
 def branch(repo):
     branch = request.args.get("branch")
     id = request.args.get("id")
@@ -118,7 +118,7 @@ def branch(repo):
         return result
 
 
-@app.route("/project/<project>/tests")
+@app.route("/projects/<project>/tests")
 def project(project):
     id = request.args.get("id")
     if id:
