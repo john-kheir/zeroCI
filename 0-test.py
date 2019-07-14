@@ -11,10 +11,13 @@ from rq import Queue
 from rq.job import Job
 from worker import conn
 from actions import Actions
+from flask_cors import CORS
 
 utils = Utils()
 actions = Actions()
+
 app = Flask(__name__)
+CORS(app)
 
 q = Queue(connection=conn)
 
@@ -36,7 +39,7 @@ def set_response_headers(response):
 
 @app.route("/triggar", methods=["POST"])
 def triggar(**kwargs):
-    """Triggar the test when post request is sent from jumpscalex repo.
+    """Triggar the test when a post request is sent from a repo's webhook.
     """
     if request.headers.get("Content-Type") == "application/json":
         # push case
@@ -66,16 +69,10 @@ def triggar(**kwargs):
     return "Done", 201
 
 
-@app.route("/mintor")
-def mintor():
-    reboot = request.args.get("reboot")
-    if reboot == "True":
-        os.system("reboot")
-    return str(os.getloadavg()), "200"
-
-
 @app.route("/")
 def home():
+    """Return repos and projects which are running on the server.
+    """
     result = {"repos": [], "projects": []}
     result["repos"] = RepoRun.objects.distinct("repo")
     result["projects"] = ProjectRun.objects.distinct("name")
@@ -85,6 +82,8 @@ def home():
 
 @app.route("/repos/<path:repo>/branches")
 def branches(repo):
+    """For repo's name sent, returns it's branches.
+    """
     branches = RepoRun.objects(repo=repo).distinct("branch")
     result = json.dumps(branches)
     return result
@@ -92,10 +91,16 @@ def branches(repo):
 
 @app.route("/repos/<path:repo>/tests")
 def branch(repo):
+    """Returns tests ran on this repo with specific branch or test details if id is sent.
+
+    :param repo: repo's name
+    :param branch: the branch's name in the repo
+    :param id: DB id of test details.
+    """
     branch = request.args.get("branch")
     id = request.args.get("id")
     if not branch:
-        return abort("", 400)
+        return abort(400)
     else:
         if id:
             repo_run = RepoRun.objects.get(id=id, repo=repo, branch=branch)
@@ -120,6 +125,11 @@ def branch(repo):
 
 @app.route("/projects/<project>/tests")
 def project(project):
+    """Returns tests ran on this project or test details if id is sent.
+
+    :param project: project's name
+    :param id: DB id of test details.
+    """
     id = request.args.get("id")
     if id:
         project_run = ProjectRun.objects.get(id=id)
@@ -136,6 +146,8 @@ def project(project):
 
 @app.route("/status")
 def status():
+    """Returns repo's branch or project status for github.
+    """
     project = request.args.get("project")
     repo = request.args.get("repo")
     branch = request.args.get("branch")

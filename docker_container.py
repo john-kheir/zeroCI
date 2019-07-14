@@ -12,7 +12,7 @@ class Docker:
         self.docker_client = docker.from_env()
 
     def create(self, image_name, name, command, environment):
-        """Create docker container without start it.
+        """Creates docker container without start it.
 
         :param image_name: docker image tag.
         :type image_name: str
@@ -26,7 +26,7 @@ class Docker:
         self.docker_client.api.create_container(image=image_name, name=name, command=command, environment=environment)
 
     def start(self, name):
-        """Start docker container.
+        """Starts docker container.
 
         :param name: docker container name.
         :type name: str
@@ -34,7 +34,7 @@ class Docker:
         self.docker_client.api.start(name)
 
     def wait(self, name, timeout):
-        """Wait docker container to finish startup command.
+        """Waits for docker container to finish startup command.
 
         :param name: docker container name.
         :type name: str
@@ -48,7 +48,7 @@ class Docker:
             return e.args
 
     def remove_container(self, name):
-        """Remove docker container.
+        """Removes docker container.
 
         :param name: docker container name.
         :type name: str
@@ -56,7 +56,7 @@ class Docker:
         self.docker_client.api.remove_container(name, force=True)
 
     def logs(self, name):
-        """Get docker container logs.
+        """Gets docker container logs.
 
         :param name: docker container name.
         :type name: str
@@ -98,7 +98,7 @@ class Docker:
         return xml_file_path
 
     def build(self, image_name, timeout, docker_file, build_args, path="."):
-        """Build docker image using dockerfile.
+        """Builds docker image using dockerfile.
 
         :param image_name: docker image tag.
         :type name: str
@@ -110,7 +110,7 @@ class Docker:
         :type build_args: dict
         :param path: path for directory that contains dockerfile.
         :type path: str
-        :return: 0 in case of success, error msg in case of failure. 
+        :return: 0 in case of success, error message in case of failure. 
         """
         try:
             self.docker_client.images.build(
@@ -121,7 +121,7 @@ class Docker:
             return e.args
 
     def run(self, image_name, name, command, environment, timeout):
-        """Run docker container.
+        """Runs docker container.
 
         :param image_name: docker image tag.
         :type name: str
@@ -133,7 +133,7 @@ class Docker:
         :type environment: dict(ex: {"key": value} or list (ex: ["key=value"])
         :param timeout: docker container timeout.
         :type timeout: int
-        :return result: 0 in case of success, error msg in case of failure.
+        :return result: 0 in case of success, error message in case of failure.
         :return stdout: logs of container startup command.
         """
         self.create(image_name=image_name, name=name, command=command, environment=environment)
@@ -151,7 +151,7 @@ class Docker:
         self.docker_client.images.remove(name_or_id, force=True)
 
     def remove_failure_images(self):
-        """Remove docker image that doesn't have tag.
+        """Removes docker image that doesn't have tag.
 
         :return: error message in case of failure.
         """

@@ -7,7 +7,7 @@ import os
 
 class Actions(Utils):
     def container_run(self, image_name, run_cmd, timeout=1800):
-        """Run tests with specific image.
+        """Runs commands on a specific image.
 
         :param image_name: docker image tag.
         :type image_name: str
@@ -28,18 +28,12 @@ class Actions(Utils):
         return result, stdout, xml_path
 
     def test_run(self, image_name, id):
-        """Run test aginst the new commit and give report on Telegram chat and github commit status.
+        """Runs tests with specific commit and store the result in DB.
         
-        :param image_name: docker image name.
+        :param image_name: docker image tag.
         :type image_name: str
-        :param repo: full repo name
-        :type repo: str
-        :param branch: branch name.
-        :type branch: str
-        :param commit: commit hash.
-        :type commit: str
-        :param committer: name of the committer on github.
-        :type committer: str
+        :param id: DB id of this commit details.
+        :type id: str
         """
         repo_run = RepoRun.objects.get(id=id)
         status = "success"
@@ -73,16 +67,12 @@ class Actions(Utils):
         
 
     def test_black(self, image_name, id):
-        """Run test aginst the new commit and give report on Telegram chat and github commit status.
+        """Runs black formatting test on the repo with specific commit.
 
-        :param image_name: docker image name.
+        :param image_name: docker image tag.
         :type image_name: str
-        :param repo: full repo name
-        :type repo: str
-        :param branch: branch name.
-        :type branch: str
-        :param commit: commit hash.
-        :type commit: str
+        :param id: DB id of this commit details.
+        :type id: str
         """
         repo_run = RepoRun.objects.get(id=id)
         link = self.serverip
@@ -97,23 +87,20 @@ class Actions(Utils):
             status=status, link=link, repo=repo_run.repo, commit=repo_run.commit, context="Black-Formatting"
         )
 
-    def build_image(self, branch, commit, id):
-        """Build a docker image to install application.
+    def build_image(self, id):
+        """Builds a docker image using a Dockerfile.
 
-        :param branch: branch name.
-        :type branch: str
-        :param commit: commit hash.
-        :type commit: str
-        :param committer: name of the committer on github.
-        :type committer: str
+        :param id: DB id of this commit details.
+        :type id: str
+        :return: image name in case of success.
         """
+        repo_run = RepoRun.objects.get(id=id)
         docker = Docker()
         image_name = self.random_string()
-        build_args = {"branch": branch, "commit": commit}
+        build_args = {"branch": repo_run.branch, "commit": repo_run.commit}
         response = docker.build(image_name=image_name, timeout=1800, docker_file="Dockerfile", build_args=build_args)
         if response:
             docker.remove_failure_images()
-            repo_run = RepoRun.objects(id=id).first()
             repo_run.status = "error"
             repo_run.result.append({"type": "log", "status": "error", "content": response})
             repo_run.save()
@@ -122,6 +109,11 @@ class Actions(Utils):
         return image_name
 
     def cal_status(self, id):
+        """Calculates the status of whole tests ran on the BD's id.
+        
+        :param id: DB id of this commit details.
+        :type id: str
+        """
         repo_run = RepoRun.objects.get(id=id)
         status = "success"
         for result in repo_run.result:
@@ -131,8 +123,12 @@ class Actions(Utils):
         repo_run.save()
 
     def build_and_test(self, id):
-        repo_run = RepoRun.objects.get(id=id)
-        image_name = self.build_image(branch=repo_run.branch, commit=repo_run.commit, id=id)
+        """Builds, runs tests, calculates status and gives report on telegram and github.
+        
+        :param id: DB id of this commit details.
+        :type id: str
+        """
+        image_name = self.build_image(id=id)
         if image_name:
             self.test_black(image_name=image_name, id=id)
             self.test_run(image_name=image_name, id=id)
