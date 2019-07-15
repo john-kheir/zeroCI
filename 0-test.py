@@ -63,8 +63,8 @@ def triggar(**kwargs):
                 id = str(repo_run.id)
                 utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
 
-                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000)
-                return job.get_id(), 200
+                actions.build_and_test(id=id)
+                return "Done", 200
 
     return "Done", 201
 
@@ -74,22 +74,17 @@ def home():
     """Return repos and projects which are running on the server.
     """
     result = {"repos": [], "projects": []}
-    result["repos"] = RepoRun.objects.distinct("repo")
+    repos = []
+    repos = RepoRun.objects.distinct("repo")
+    for repo in repos:
+        branches = RepoRun.objects(repo=repo).distinct("branch")
+        result["repos"].append({repo:branches})
     result["projects"] = ProjectRun.objects.distinct("name")
     result_json = json.dumps(result)
     return result_json, 200
 
 
-@app.route("/repos/<path:repo>/branches")
-def branches(repo):
-    """For repo's name sent, returns it's branches.
-    """
-    branches = RepoRun.objects(repo=repo).distinct("branch")
-    result = json.dumps(branches)
-    return result
-
-
-@app.route("/repos/<path:repo>/tests")
+@app.route("/repos/<path:repo>")
 def branch(repo):
     """Returns tests ran on this repo with specific branch or test details if id is sent.
 
@@ -123,7 +118,7 @@ def branch(repo):
         return result
 
 
-@app.route("/projects/<project>/tests")
+@app.route("/projects/<project>")
 def project(project):
     """Returns tests ran on this project or test details if id is sent.
 
