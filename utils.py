@@ -21,8 +21,8 @@ class Utils:
         config = configparser.ConfigParser()
         config.optionxform = str
         config.read("config.ini")
-        self.username = config["docker"]["username"]
-        self.password = config["docker"]["password"]
+        self.iyo_id = config["iyo"]["id"]
+        self.iyo_secret = config["iyo"]["secret"]
         self.serverip = config["main"]["server_ip"]
         self.chat_id = config["telegram"]["chat_id"]
         self.bot_token = config["telegram"]["token"]

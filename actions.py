@@ -5,28 +5,8 @@ from vms import VMS
 
 vms = VMS()
 
+
 class Actions(Utils):
-    # def container_run(self, image_name, run_cmd, timeout=1800):
-    #     """Runs commands on a specific image.
-
-    #     :param image_name: docker image tag.
-    #     :type image_name: str
-    #     :param run_cmd: command line that will be run tests. 
-    #     :type run_cmd: str
-    #     :param repo: full repo name
-    #     :param timeout: timeout for test.
-    #     :type timeout: int
-    #     """
-    #     container_name = self.random_string()
-    #     docker = Docker()
-    #     cmd = "/bin/bash -c '{}'".format(run_cmd)
-    #     result, stdout = docker.run(
-    #         image_name=image_name, name=container_name, command=cmd, environment=self.environment, timeout=timeout
-    #     )
-    #     xml_path = docker.copy_from(name=container_name, source_path="/test.xml", target_path=self.result_path)
-    #     docker.remove_container(container_name)
-    #     return result, stdout, xml_path
-
     def test_run(self, node_ip, port, id):
         """Runs tests with specific commit and store the result in DB.
         
@@ -52,7 +32,7 @@ class Actions(Utils):
                     repo_run.result.append(
                         {"type": "testsuite", "status": status, "name": result["summary"]["name"], "content": result}
                     )
-                    
+
                     os.remove(file_path)
                 else:
                     if response:
@@ -63,7 +43,6 @@ class Actions(Utils):
 
             repo_run.result.append({"type": "log", "status": status, "name": "No tests", "content": "No tests found"})
         repo_run.save()
-        
 
     def test_black(self, node_ip, port, id):
         """Runs black formatting test on the repo with specific commit.
@@ -85,27 +64,6 @@ class Actions(Utils):
         self.github_status_send(
             status=status, link=link, repo=repo_run.repo, commit=repo_run.commit, context="Black-Formatting"
         )
-
-    # def build_image(self, id):
-    #     """Builds a docker image using a Dockerfile.
-
-    #     :param id: DB id of this commit details.
-    #     :type id: str
-    #     :return: image name in case of success.
-    #     """
-    #     repo_run = RepoRun.objects.get(id=id)
-    #     docker = Docker()
-    #     image_name = self.random_string()
-    #     build_args = {"branch": repo_run.branch, "commit": repo_run.commit}
-    #     response = docker.build(image_name=image_name, timeout=1800, docker_file="Dockerfile", build_args=build_args)
-    #     if response:
-    #         docker.remove_failure_images()
-    #         repo_run.status = "error"
-    #         repo_run.result.append({"type": "log", "status": "error", "content": response})
-    #         repo_run.save()
-    #         self.report(id=id)
-    #         return False
-    #     return image_name
 
     def cal_status(self, id):
         """Calculates the status of whole tests ran on the BD's id.
@@ -141,3 +99,4 @@ class Actions(Utils):
             repo_run.result.append({"type": "log", "status": "error", "content": "Couldn't deploy a vm"})
             repo_run.save()
             self.cal_status(id=id)
+            self.report(id=id)

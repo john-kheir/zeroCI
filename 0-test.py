@@ -63,10 +63,10 @@ def triggar(**kwargs):
                 id = str(repo_run.id)
                 utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
 
-                actions.build_and_test(id=id)
-                return "Done", 200
+                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=1800)
+                return job.get_id(), 200
 
-    return "Done", 201
+    return "Nothing to do", 201
 
 
 @app.route("/")
@@ -78,7 +78,7 @@ def home():
     repos = RepoRun.objects.distinct("repo")
     for repo in repos:
         branches = RepoRun.objects(repo=repo).distinct("branch")
-        result["repos"].append({repo:branches})
+        result["repos"].append({repo: branches})
     result["projects"] = ProjectRun.objects.distinct("name")
     result_json = json.dumps(result)
     return result_json, 200
