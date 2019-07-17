@@ -170,7 +170,7 @@ class Utils:
             msg = "Tests passed "
         elif repo_run.status == "failure":
             msg = "Tests failed "
-        elif repo_run.status == "error":
+        else:
             msg = "Tests errored "
         self.send_msg(
             msg=msg + self.serverip,

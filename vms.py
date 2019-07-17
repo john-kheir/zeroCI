@@ -99,11 +99,11 @@ class VMS(Utils):
             envs = envs + "export {}={}; ".format(env, self.environment[env])
         cmd = envs + run_cmd
         response = self.execute_command(cmd, ip=node_ip, port=port)
-        file_path = "/mnt/log/result/{}.xml".format(self.random_string())
-        # copy_cmd = 'scp -P {port} root@{node_ip}:/test.xml {file_name}'.format(port=port, file_name=file_path, node_ip=node_ip)
-        # response_2 = self.execute_command(cmd=copy_cmd, ip=node_ip, port=port)
-        # if response_2.returncode:
-        file_path = False
+        file_path = "{}/{}.xml".format(self.result_path, self.random_string())
+        copy_cmd = 'scp -P {port} -o "StrictHostKeyChecking no" root@{node_ip}:/test.xml {file_name}'.format(port=port, file_name=file_path, node_ip=node_ip)
+        response_2 = self.execute_cmd(cmd=copy_cmd, timeout=30)
+        if response_2.returncode:
+            file_path = None
         return response.returncode, response.stderr, file_path
 
     def destroy_vm(self, uuid):

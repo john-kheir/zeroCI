@@ -66,8 +66,32 @@ def triggar(**kwargs):
                 job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=1800)
                 return job.get_id(), 200
 
-    return "Nothing to do", 201
+    return "Done", 201
 
+
+@app.route("/add_project", methods=["POST"])
+def add_project():
+    if request.headers.get("Content-Type") == "application/json":
+        project_name = request.json.get("project_name")
+        prequisties = request.json.get("prequisties")
+        install_script = request.json.get("install_script")
+        test_script = request.json.get("test_script")
+        run_time = request.json.get("run_time")
+        # if prequisties == "jsx":
+        #     install_script = ""
+        if type(project_name) != str:
+            return abort(400)
+        if type(install_script) != str:
+            return abort(400)
+        if type(test_script) not in [str, list]:
+            return abort(400)
+        if type(test_script) == str:
+            test_script = [test_script]
+        if type(run_time) != int:
+            return abort(400)
+        scheduler.add_job(func=actions.run_project, args=[project_name, install_script, test_script], trigger="cron", hour=run_time)
+        return "Added", 200
+    return abort(404)
 
 @app.route("/")
 def home():
