@@ -52,7 +52,6 @@ class VMS(Utils):
             iyo_name, baseurl="https://itsyou.online/api", application_id=self.iyo_id, secret=self.iyo_secret
         )
         jwt = iyo.jwt_get(scope="user:memberof:threefold.sysadmin").jwt
-        # create vm ubuntu 18.04
         ens4 = """network:
   version: 2
   renderer: networkd
@@ -90,30 +89,9 @@ class VMS(Utils):
             return vm_uuid, node_ip, port
         return None, None, None
 
-    def install_app(self, node_ip, port, id):
-        repo_run = RepoRun.objects.get(id=id)
-        copy_cmd = "scp -P {port} -o StrictHostKeyChecking=no install.sh root@{node_ip}:/install.sh".format(
-            port=port, node_ip=node_ip
-        )
-        response = self.execute_cmd(copy_cmd)
-        if not response.returncode:
-            install_cmd = "export branch={branch}; export commit={commit}; bash /install.sh".format(
-                branch=repo_run.branch, commit=repo_run.commit
-            )
-            response_2 = self.execute_command(cmd=install_cmd, ip=node_ip, port=port)
-            if response_2.returncode:
-                repo_run.status = "error"
-                repo_run.result.append({"type": "log", "status": "error", "content": response_2.stderr})
-                repo_run.save()
-                self.report(id=id)
-            else:
-                return True
-        else:
-            repo_run.status = "error"
-            repo_run.result.append({"type": "log", "status": "error", "content": response.stderr})
-            repo_run.save()
-            self.report(id=id)
-        return False
+    def install_app(self, node_ip, port, install_script):
+        response = self.execute_command(cmd=install_script, ip=node_ip, port=port)
+        return response
 
     def run_test(self, run_cmd, node_ip, port):
         envs = ""
