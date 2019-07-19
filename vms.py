@@ -46,7 +46,7 @@ class VMS(Utils):
         response = self.execute_cmd(target)
         return response
 
-    def deploy_vm(self, flist="https://hub.grid.tf/tf-bootable/ubuntu:18.04.flist", cpu=2, memory=4096):
+    def deploy_vm(self, flist="https://hub.grid.tf/tf-bootable/ubuntu:18.04.flist", cpu=2, memory=2048):
         iyo_name = self.random_string()
         iyo = j.clients.itsyouonline.get(
             iyo_name, baseurl="https://itsyou.online/api", application_id=self.iyo_id, secret=self.iyo_secret
@@ -100,7 +100,9 @@ class VMS(Utils):
         cmd = envs + run_cmd
         response = self.execute_command(cmd, ip=node_ip, port=port)
         file_path = "{}/{}.xml".format(self.result_path, self.random_string())
-        copy_cmd = 'scp -P {port} -o "StrictHostKeyChecking no" root@{node_ip}:/test.xml {file_name}'.format(port=port, file_name=file_path, node_ip=node_ip)
+        copy_cmd = 'scp -P {port} -o "StrictHostKeyChecking no" root@{node_ip}:/test.xml {file_name}'.format(
+            port=port, file_name=file_path, node_ip=node_ip
+        )
         response_2 = self.execute_cmd(cmd=copy_cmd, timeout=30)
         if response_2.returncode:
             file_path = None

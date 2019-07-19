@@ -234,15 +234,16 @@ class Utils:
 
     def install_test_scripts(self, id):
         repo_run = RepoRun.objects.get(id=id)
-        repo_part_name = repo_run.repo.split("/")[-1]
         clone = """cd /;
         apt-get update;
         apt-get install -y git;
+        mkdir -p /opt/code/github/;
+        cd /opt/code/github/;
         git clone https://github.com/{repo}.git --branch {branch};
-        cd {repo_part_name};
+        cd {repo_name};
         git reset --hard {commit};
         """.format(
-            repo=repo_run.repo, branch=repo_run.branch, commit=repo_run.commit, repo_part_name=repo_part_name
+            repo=repo_run.repo, branch=repo_run.branch, commit=repo_run.commit, repo_name=repo_run.repo
         ).replace(
             "\n", " "
         )

@@ -1,17 +1,18 @@
-from flask import Flask, request, send_file, render_template, abort, redirect
+from flask import Flask, request, send_file, render_template, abort, redirect, Response
 from utils import Utils
 from datetime import datetime
 from db import *
 import os
 import json
 import atexit
-from apscheduler.schedulers.background import BackgroundScheduler
 from builders import builders
 from rq import Queue
 from rq.job import Job
 from worker import conn
 from actions import Actions
 from flask_cors import CORS
+from rq_scheduler import Scheduler
+from redis import Redis
 
 utils = Utils()
 actions = Actions()
@@ -20,13 +21,7 @@ app = Flask(__name__)
 CORS(app)
 
 q = Queue(connection=conn)
-
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=builders, trigger="cron", hour=18)
-scheduler.start()
-
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
+scheduler = Scheduler(connection=Redis())
 
 
 @app.after_request
@@ -73,25 +68,49 @@ def triggar(**kwargs):
 def add_project():
     if request.headers.get("Content-Type") == "application/json":
         project_name = request.json.get("project_name")
-        prequisties = request.json.get("prequisties")
+        # prequisties = request.json.get("prequisties")
         install_script = request.json.get("install_script")
         test_script = request.json.get("test_script")
         run_time = request.json.get("run_time")
-        # if prequisties == "jsx":
-        #     install_script = ""
-        if type(project_name) != str:
-            return abort(400)
-        if type(install_script) != str:
-            return abort(400)
-        if type(test_script) not in [str, list]:
-            return abort(400)
-        if type(test_script) == str:
-            test_script = [test_script]
-        if type(run_time) != int:
-            return abort(400)
-        scheduler.add_job(func=actions.run_project, args=[project_name, install_script, test_script], trigger="cron", hour=run_time)
-        return "Added", 200
-    return abort(404)
+        authentication = request.json.get("authentication")
+        if authentication == utils.github_token:
+            # if prequisties == "jsx":
+            #     install_script = ""
+            if (
+                (type(project_name) != str)
+                or (type(install_script) != str)
+                or (type(test_script) not in [str, list])
+                or (type(run_time) != str)
+            ):
+                return Response("Wrong data", 400)
+
+            if type(test_script) == str:
+                test_script = [test_script]
+
+            try:
+                scheduler.cron(
+                    cron_string=run_time,
+                    func=actions.run_project,
+                    args=[project_name, install_script, test_script],
+                    id=project_name,
+                )
+            except:
+                return Response("Wrong time format should be like (0 * * * *)", 400)
+            return Response("Added", 200)
+        else:
+            return Response("Authentication failed", 400)
+    return Response("Not Found", 404)
+
+
+@app.route("/remove_project", methods=["POST"])
+def remove_project():
+    if request.headers.get("Content-Type") == "application/json":
+        project_name = request.json.get("project_name")
+        authentication = request.json.get("authentication")
+        if authentication == utils.github_token:
+            scheduler.cancel(project_name)
+        return "Removed", 200
+
 
 @app.route("/")
 def home():

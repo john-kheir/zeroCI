@@ -27,10 +27,15 @@ class Actions(Utils):
                 if file_path:
                     if response:
                         status = "failure"
-                    try:    
+                    try:
                         result = self.xml_parse(path=file_path, line=line)
                         repo_run.result.append(
-                            {"type": "testsuite", "status": status, "name": result["summary"]["name"], "content": result}
+                            {
+                                "type": "testsuite",
+                                "status": status,
+                                "name": result["summary"]["name"],
+                                "content": result,
+                            }
                         )
                     except:
                         name = "cmd {}".format(i + 1)
@@ -57,8 +62,7 @@ class Actions(Utils):
         repo_run = db_run.objects.get(id=id)
         link = self.serverip
         status = "success"
-        repo_part_name = repo_run.repo.split("/")[-1]
-        line = "black /{} -l 120 -t py37 --exclude 'templates'".format(repo_part_name)
+        line = "black /opt/code/github/{} -l 120 -t py37 --exclude 'templates'".format(repo_run.repo)
         response, stdout, file = vms.run_test(run_cmd=line, node_ip=node_ip, port=port)
         if "reformatted" in stdout:
             status = "failure"
