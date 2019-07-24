@@ -58,48 +58,49 @@ def triggar(**kwargs):
                 id = str(repo_run.id)
                 utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
 
-                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=1800)
-                return job.get_id(), 200
+                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=8000)
+                return Response(job.get_id(), 200)
 
-    return "Done", 201
+    return Response("Done", 200)
 
 
 @app.route("/add_project", methods=["POST"])
 def add_project():
     if request.headers.get("Content-Type") == "application/json":
         project_name = request.json.get("project_name")
-        # prequisties = request.json.get("prequisties")
+        prequisties = request.json.get("prequisties")
         install_script = request.json.get("install_script")
         test_script = request.json.get("test_script")
         run_time = request.json.get("run_time")
         authentication = request.json.get("authentication")
+        timeout = request.json.get("timeout", 3600)
         if authentication == utils.github_token:
-            # if prequisties == "jsx":
-            #     install_script = ""
-            if (
-                (type(project_name) != str)
-                or (type(install_script) != str)
-                or (type(test_script) not in [str, list])
-                or (type(run_time) != str)
+            if not (isinstance(project_name, str)
+                and isinstance(install_script, str)
+                and isinstance(test_script, (str, list))
+                and isinstance(prequisties, str)
+                and isinstance(run_time, str)
+                and isinstance(timeout, int)
             ):
                 return Response("Wrong data", 400)
 
-            if type(test_script) == str:
+            if isinstance(test_script, str):
                 test_script = [test_script]
 
             try:
                 scheduler.cron(
                     cron_string=run_time,
                     func=actions.run_project,
-                    args=[project_name, install_script, test_script],
+                    args=[project_name, install_script, test_script, prequisties, timeout],
                     id=project_name,
+                    timeout=timeout+3600,
                 )
             except:
                 return Response("Wrong time format should be like (0 * * * *)", 400)
             return Response("Added", 200)
         else:
             return Response("Authentication failed", 400)
-    return Response("Not Found", 404)
+    return Response("", 404)
 
 
 @app.route("/remove_project", methods=["POST"])
@@ -189,7 +190,7 @@ def status():
     project = request.args.get("project")
     repo = request.args.get("repo")
     branch = request.args.get("branch")
-    file = request.args.get("file")  # to return the run result
+    # file = request.args.get("file")  # to return the run result
     if project:
         project_run = ProjectRun.objects(name=project, status__ne="pending").order_by("-timestamp").first()
         if project_run.status == "success":

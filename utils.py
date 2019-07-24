@@ -42,7 +42,7 @@ class Utils:
     def db_connect(self, db_name, host, port):
         connect(db=db_name, host=host, port=port)
 
-    def execute_cmd(self, cmd, timeout=1800):
+    def execute_cmd(self, cmd, timeout=3600):
         with Popen(cmd, shell=True, universal_newlines=True, stdout=PIPE, stderr=PIPE, encoding="utf-8") as process:
             try:
                 stdout, stderr = process.communicate(timeout=timeout)
@@ -167,11 +167,11 @@ class Utils:
         repo_run = RepoRun.objects.get(id=id)
         self.github_status_send(status=repo_run.status, repo=repo_run.repo, link=self.serverip, commit=repo_run.commit)
         if repo_run.status == "success":
-            msg = "Tests passed "
+            msg = "✅ Tests passed "
         elif repo_run.status == "failure":
-            msg = "Tests failed "
+            msg = "❌ Tests failed "
         else:
-            msg = "Tests errored "
+            msg = "⛔️ Tests errored "
         self.send_msg(
             msg=msg + self.serverip,
             repo=repo_run.repo,
@@ -251,8 +251,9 @@ class Utils:
         script = self.github_get_content(repo=repo_run.repo, ref=repo_run.commit, file_path="0-ci.yaml")
         if script:
             yaml_script = yaml.load(script)
+            prequisties = yaml_script["prequisties"]
             install = "; ".join(yaml_script["install"])
             install_script = clone + install
             test_script = yaml_script["script"]
-            return install_script, test_script
-        return None, None
+            return prequisties, install_script, test_script
+        return None, None, None
