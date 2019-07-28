@@ -75,7 +75,8 @@ def add_project():
         authentication = request.json.get("authentication")
         timeout = request.json.get("timeout", 3600)
         if authentication == utils.github_token:
-            if not (isinstance(project_name, str)
+            if not (
+                isinstance(project_name, str)
                 and isinstance(install_script, str)
                 and isinstance(test_script, (str, list))
                 and isinstance(prequisties, str)
@@ -93,7 +94,7 @@ def add_project():
                     func=actions.run_project,
                     args=[project_name, install_script, test_script, prequisties, timeout],
                     id=project_name,
-                    timeout=timeout+3600,
+                    timeout=timeout + 3600,
                 )
             except:
                 return Response("Wrong time format should be like (0 * * * *)", 400)
@@ -118,11 +119,7 @@ def home():
     """Return repos and projects which are running on the server.
     """
     result = {"repos": [], "projects": []}
-    repos = []
-    repos = RepoRun.objects.distinct("repo")
-    for repo in repos:
-        branches = RepoRun.objects(repo=repo).distinct("branch")
-        result["repos"].append({repo: branches})
+    result["repos"] = RepoRun.objects.distinct("repo")
     result["projects"] = ProjectRun.objects.distinct("name")
     result_json = json.dumps(result)
     return result_json, 200
@@ -138,9 +135,7 @@ def branch(repo):
     """
     branch = request.args.get("branch")
     id = request.args.get("id")
-    if not branch:
-        return abort(400)
-    else:
+    if branch:
         if id:
             repo_run = RepoRun.objects.get(id=id, repo=repo, branch=branch)
             result = json.dumps(repo_run.result)
@@ -160,6 +155,9 @@ def branch(repo):
             )
         result = json.dumps(details)
         return result
+    branches = RepoRun.objects(repo=repo).distinct("branch")
+    result = json.dumps(branches)
+    return result
 
 
 @app.route("/projects/<project>")
@@ -208,6 +206,15 @@ def status():
             return send_file("build_failing.svg", mimetype="image/svg+xml")
 
     return abort(404)
+
+
+@app.route("/last_status")
+def state():
+    repo_runs = RepoRun.objects(repo="threefoldtech/jumpscaleX", branch="development_jumpscale_testing").order_by("-timestamp")
+    for repo_run in repo_runs:
+        for result in repo_run.result:
+            if result["type"] == "testsuite":
+                return render_template("template.html", **result["content"])
 
 
 if __name__ == "__main__":

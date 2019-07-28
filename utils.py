@@ -234,16 +234,17 @@ class Utils:
 
     def install_test_scripts(self, id):
         repo_run = RepoRun.objects.get(id=id)
-        clone = """cd /;
-        apt-get update;
-        apt-get install -y git;
-        mkdir -p /opt/code/github/;
-        cd /opt/code/github/;
-        git clone https://github.com/{repo}.git --branch {branch};
-        cd {repo_name};
-        git reset --hard {commit};
+        org_repo_name = repo_run.repo.split("/")[0]
+        clone = """apt-get update &&
+        apt-get install -y git python3-pip &&
+        pip3 install black &&
+        mkdir -p /opt/code/github/{org_repo_name} &&
+        cd /opt/code/github/{org_repo_name} &&
+        git clone https://github.com/{repo}.git --branch {branch} &&
+        cd {repo} &&
+        git reset --hard {commit} &&
         """.format(
-            repo=repo_run.repo, branch=repo_run.branch, commit=repo_run.commit, repo_name=repo_run.repo
+            repo=repo_run.repo, branch=repo_run.branch, commit=repo_run.commit, org_repo_name=org_repo_name
         ).replace(
             "\n", " "
         )
@@ -251,9 +252,9 @@ class Utils:
         script = self.github_get_content(repo=repo_run.repo, ref=repo_run.commit, file_path="0-ci.yaml")
         if script:
             yaml_script = yaml.load(script)
-            prequisties = yaml_script["prequisties"]
-            install = "; ".join(yaml_script["install"])
+            prequisties = yaml_script.get("prequisties")
+            install = " && ".join(yaml_script.get("install"))
             install_script = clone + install
-            test_script = yaml_script["script"]
+            test_script = yaml_script.get("script")
             return prequisties, install_script, test_script
         return None, None, None

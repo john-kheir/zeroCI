@@ -46,16 +46,9 @@ class VMS(Utils):
         response = self.execute_cmd(target, timeout=timeout)
         return response
 
-
     def prepare(self, prequisties):
         if prequisties == "docker":
-            self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker.flist"
-    
-
-    def after(self, prequisties=""):
-        if prequisties == "docker":
-            cmd = "apt-get install -y iptables; sleep 10; systemctl start docker"
-            self.execute_command(cmd=cmd, ip=self.node_ip, port=self.port)
+            self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker_latest.flist"
 
     def deploy_vm(self, prequisties=""):
         iyo_name = self.random_string()
@@ -77,7 +70,7 @@ class VMS(Utils):
         self.media = []
         self.flist = "https://hub.grid.tf/tf-bootable/ubuntu:18.04.flist"
         self.vm_name = self.random_string()
-        self.node_ip = self.get_node()
+        self.node_ip = "10.102.18.170" #self.get_node()
         self.client_name = self.random_string()
         self.node = j.clients.zos.get(self.client_name, host=self.node_ip, password=self.jwt)
         self.port = random.randint(22000, 25000)
@@ -96,7 +89,6 @@ class VMS(Utils):
 
         time.sleep(40)
         if self.vm_uuid:
-            self.after(prequisties=prequisties)
             return self.vm_uuid, self.node_ip, self.port
         return None, None, None
 
@@ -117,7 +109,7 @@ class VMS(Utils):
         response_2 = self.execute_cmd(cmd=copy_cmd, timeout=30)
         if response_2.returncode:
             file_path = None
-        return response.returncode, response.stderr, file_path
+        return response, file_path
 
     def destroy_vm(self, uuid):
         if self.node:

@@ -23,9 +23,9 @@ class Actions(Utils):
                 status = "success"
                 if line.startswith("#"):
                     continue
-                response, stdout, file_path = vms.run_test(run_cmd=line, node_ip=node_ip, port=port, timeout=timeout)
+                response, file_path = vms.run_test(run_cmd=line, node_ip=node_ip, port=port, timeout=timeout)
                 if file_path:
-                    if response:
+                    if response.returncode:
                         status = "failure"
                     try:
                         result = self.xml_parse(path=file_path, line=line)
@@ -39,13 +39,15 @@ class Actions(Utils):
                         )
                     except:
                         name = "cmd {}".format(i + 1)
-                        repo_run.result.append({"type": "log", "status": status, "name": name, "content": stdout})
+                        content = "stdout:\n" + response.stdout + "\nstderr:\n" + response.stderr
+                        repo_run.result.append({"type": "log", "status": status, "name": name, "content": content})
                     os.remove(file_path)
                 else:
-                    if response:
+                    if response.returncode:
                         status = "failure"
                     name = "cmd {}".format(i + 1)
-                    repo_run.result.append({"type": "log", "status": status, "name": name, "content": stdout})
+                    content = "stdout:\n" + response.stdout + "\nstderr:\n" + response.stderr
+                    repo_run.result.append({"type": "log", "status": status, "name": name, "content": content})
         else:
 
             repo_run.result.append({"type": "log", "status": status, "name": "No tests", "content": "No tests found"})
@@ -62,11 +64,13 @@ class Actions(Utils):
         repo_run = db_run.objects.get(id=id)
         link = self.serverip
         status = "success"
-        line = "black /opt/code/github/{} -l 120 -t py37 --exclude 'templates'".format(repo_run.repo)
-        response, stdout, file = vms.run_test(run_cmd=line, node_ip=node_ip, port=port, timeout=timeout)
-        if "reformatted" in stdout:
+        line = "black /opt/code/github/{} -l 120 -t py37 --diff --exclude 'templates'".format(repo_run.repo)
+        response, file = vms.run_test(run_cmd=line, node_ip=node_ip, port=port, timeout=timeout)
+        if "reformatted" in response.stderr:
             status = "failure"
-        repo_run.result.append({"type": "log", "status": status, "name": "Black Formatting", "content": stdout})
+        repo_run.result.append(
+            {"type": "log", "status": status, "name": "Black Formatting", "content": response.stderr}
+        )
         repo_run.save()
         self.github_status_send(
             status=status, link=link, repo=repo_run.repo, commit=repo_run.commit, context="Black-Formatting"
@@ -79,16 +83,17 @@ class Actions(Utils):
                 response = vms.install_app(node_ip=node_ip, port=port, install_script=install_script)
                 if response.returncode:
                     repo_run = db_run.objects.get(id=id)
-                    repo_run.result.append({"type": "log", "status": "error", "content": response.stderr})
-                    self.cal_status(id=id, db_run=db_run)
+                    content = "stdout:\n" + response.stdout + "\nstderr:\n" + response.stderr
+                    repo_run.result.append({"type": "log", "status": "error", "content": content})
                     repo_run.save()
+                    self.cal_status(id=id, db_run=db_run)
                 return uuid, response, node_ip, port
 
             else:
                 repo_run = db_run.objects.get(id=id)
                 repo_run.result.append({"type": "log", "status": "error", "content": "Couldn't deploy a vm"})
                 repo_run.save()
-                self.cal_status(id=id, db_run=db_run)           
+                self.cal_status(id=id, db_run=db_run)
         else:
             repo_run = db_run.objects.get(id=id)
             repo_run.result.append({"type": "log", "status": "success", "content": "Didn't find something to install"})
@@ -118,7 +123,9 @@ class Actions(Utils):
         :type id: str
         """
         prequisties, install_script, test_script = self.install_test_scripts(id=id)
-        uuid, response, node_ip, port = self.build(install_script=install_script, id=id, db_run=RepoRun, prequisties=prequisties)
+        uuid, response, node_ip, port = self.build(
+            install_script=install_script, id=id, db_run=RepoRun, prequisties=prequisties
+        )
         if uuid:
             if not response.returncode:
                 self.test_black(node_ip=node_ip, port=port, id=id, db_run=RepoRun, timeout=500)
@@ -132,10 +139,14 @@ class Actions(Utils):
         project_run = ProjectRun(timestamp=datetime.now().timestamp(), status=status, name=project_name)
         project_run.save()
         id = str(project_run.id)
-        uuid, response, node_ip, port = self.build(install_script=install_script, id=id, db_run=ProjectRun, prequisties=prequisties)
+        uuid, response, node_ip, port = self.build(
+            install_script=install_script, id=id, db_run=ProjectRun, prequisties=prequisties
+        )
         if uuid:
             if not response.returncode:
-                self.test_run(node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=ProjectRun, timeout=timeout)
+                self.test_run(
+                    node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=ProjectRun, timeout=timeout
+                )
                 self.cal_status(id=id, db_run=ProjectRun)
                 project_run = ProjectRun.objects.get(id=id)
 
