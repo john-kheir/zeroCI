@@ -194,6 +194,13 @@ class Utils:
         return exps
 
     def xml_parse(self, path, line):
+        """Parse the xml file resulted from junit.
+
+        :param path: path to xml file.
+        :type path: str
+        :param line: command line of the execution to check if it result from pytest as there is a different naming for skip tests between pytest and nosetest.
+        :param line: str
+        """
         result = dict(summary={}, testcases=[])
         content = xmltodict.parse(self.load_file(path), attr_prefix="", cdata_key="content")["testsuite"]
         result["summary"]["name"] = content["name"]
@@ -228,11 +235,24 @@ class Utils:
         return result
 
     def load_file(self, path):
+        """Load file content.
+        
+        :param path: path to file.
+        :type path: str
+        :return: file content
+        :return type: str
+        """
         with open(path, "r") as f:
             content = f.read()
         return content
 
     def install_test_scripts(self, id):
+        """Read 0-CI yaml script from the repo home directory and divide it to (prequisties, install, test) scripts.
+
+        :param id: mongo record id to get commit information.
+        :type id: str
+        :return: prequisties, install, test script.
+        """
         repo_run = RepoRun.objects.get(id=id)
         org_repo_name = repo_run.repo.split("/")[0]
         clone = """apt-get update &&

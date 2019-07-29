@@ -210,7 +210,11 @@ def status():
 
 @app.route("/last_status")
 def state():
-    repo_runs = RepoRun.objects(repo="threefoldtech/jumpscaleX", branch="development_jumpscale_testing").order_by("-timestamp")
+    """Api for last status of the tests on branch development _jumpscale_testing.
+    """
+    repo_runs = RepoRun.objects(repo="threefoldtech/jumpscaleX", branch="development_jumpscale_testing").order_by(
+        "-timestamp"
+    )
     for repo_run in repo_runs:
         for result in repo_run.result:
             if result["type"] == "testsuite":

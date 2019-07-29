@@ -13,6 +13,11 @@ class VMS(Utils):
         self.node = None
 
     def list_nodes(self):
+        """List farm nodes.
+
+        :return: list of farm ips
+        :return type: list
+        """
         farm = j.sal_zos.farm.get("freefarm")
         nodes = farm.list_nodes()
         ips = []
@@ -23,12 +28,22 @@ class VMS(Utils):
         return ips
 
     def get_node(self):
+        """Get node ip from farm randomly.
+
+        :return: node ip
+        :return type: str
+        """
         # should pick with a rule
         nodes = self.list_nodes()
         node = random.choice(nodes)
         return node
 
     def load_ssh_key(self):
+        """Load sshkey if it is exist or genertate one if not.
+
+        :return: public key
+        :return type: str
+        """
         home_user = os.path.expanduser("~")
         if os.path.exists("{}/.ssh/id_rsa.pub".format(home_user)):
             with open("{}/.ssh/id_rsa.pub".format(home_user), "r") as file:
@@ -42,35 +57,50 @@ class VMS(Utils):
         return ssh
 
     def execute_command(self, cmd, ip="", port=22, timeout=3600):
+        """Execute a command on a remote machine using ssh.
+
+        :param cmd: command to be executed on a remote machine.
+        :type cmd: str
+        :param ip: machine's ip.
+        :type ip: str
+        :param port: machine's ssh port.
+        :type port: int
+        :param timout: stop execution after a certain time.
+        :type timeout: int
+        :return: subprocess object containing (returncode, stdout, stderr)
+        """
         target = "ssh -o 'StrictHostKeyChecking no' -p {} root@{} '{}'".format(port, ip, cmd)
         response = self.execute_cmd(target, timeout=timeout)
         return response
 
     def prepare(self, prequisties):
-        if prequisties == "docker":
+        """Prepare the machine's parameters before creating it depend on the prequisties needed.
+
+        :param prequisties: list of prequisties needed.
+        :type prequisties: list
+        """
+        if "docker" in prequisties:
             self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker_latest.flist"
 
     def deploy_vm(self, prequisties=""):
+        """Deploy a virtual machine on zos node.
+
+        :param prequisties: list of prequisties needed.
+        :type prequisties: list
+        :return: node info (uuid, ip, port) required to access the virtual machine created.
+        """
         iyo_name = self.random_string()
         iyo = j.clients.itsyouonline.get(
             iyo_name, baseurl="https://itsyou.online/api", application_id=self.iyo_id, secret=self.iyo_secret
         )
         self.jwt = iyo.jwt_get(scope="user:memberof:threefold.sysadmin").jwt
-        self.ens4 = """network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    ens4:
-      dhcp4: true
-      dhcp6: true
-        """
         self.ssh_key = self.load_ssh_key()
         self.cpu = 2
         self.memory = 2048
         self.media = []
-        self.flist = "https://hub.grid.tf/tf-bootable/ubuntu:18.04.flist"
+        self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu:18.04.flist"
         self.vm_name = self.random_string()
-        self.node_ip = "10.102.18.170" #self.get_node()
+        self.node_ip = "10.102.18.170"  # self.get_node()
         self.client_name = self.random_string()
         self.node = j.clients.zos.get(self.client_name, host=self.node_ip, password=self.jwt)
         self.port = random.randint(22000, 25000)
@@ -83,7 +113,7 @@ class VMS(Utils):
             memory=self.memory,
             cpu=self.cpu,
             nics=[{"type": "default"}],
-            config={"/root/.ssh/authorized_keys": self.ssh_key, "/etc/netplan/ens4.yaml": self.ens4},
+            config={"/root/.ssh/authorized_keys": self.ssh_key},
             media=self.media,
         )
 
@@ -93,10 +123,31 @@ class VMS(Utils):
         return None, None, None
 
     def install_app(self, node_ip, port, install_script):
+        """Install application to be tested.
+
+        :param node_ip: mahcine's ip
+        :type node_ip: str
+        :param port: machine's ssh port
+        :type port: int
+        :param install_script: bash script to install script
+        :type install_script: str
+        """
         response = self.execute_command(cmd=install_script, ip=node_ip, port=port)
         return response
 
     def run_test(self, run_cmd, node_ip, port, timeout):
+        """Run test command and get the result as xml file if the running command is following junit otherwise result will be log.
+
+        :param run_cmd: test command to be run.
+        :type run_cmd: str
+        :param node_ip: machine's ip
+        :type node_ip: str
+        :param port: machine's ssh port
+        :type port: int
+        :param timout: stop execution after a certain time.
+        :type timeout: int
+        :return: path to xml file if exist and subprocess object containing (returncode, stdout, stderr)
+        """
         envs = ""
         for env in self.environment.keys():
             envs = envs + "export {}={}; ".format(env, self.environment[env])
@@ -112,5 +163,10 @@ class VMS(Utils):
         return response, file_path
 
     def destroy_vm(self, uuid):
+        """Destory the virtual machine after finishing test.
+        
+        :param uuid: machine's uuid.
+        :type uuid: str
+        """
         if self.node:
             self.node.client.kvm.destroy(uuid)
