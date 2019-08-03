@@ -208,17 +208,33 @@ def status():
     return abort(404)
 
 
-@app.route("/last_status")
+@app.route("/get_status")
 def state():
     """Api for last status of the tests on branch development _jumpscale_testing.
     """
-    repo_runs = RepoRun.objects(repo="threefoldtech/jumpscaleX", branch="development_jumpscale_testing").order_by(
-        "-timestamp"
-    )
-    for repo_run in repo_runs:
-        for result in repo_run.result:
-            if result["type"] == "testsuite":
-                return render_template("template.html", **result["content"])
+    n = request.args.get("n")
+    id = request.args.get("id")
+    if not n:
+        n = "1"
+    if n.isnumeric():
+        if id:
+            repo_run = RepoRun.objects.get(id=id)
+            if int(n) <= len(repo_run.result):
+                result = repo_run.result[int(n) - 1]
+                if result["type"] == "testsuite":
+                    return render_template("template.html", **result["content"])
+                else:
+                    return render_template("result.html", content=result["content"])
+
+    branch = request.args.get("branch")
+    if branch:
+        repo_runs = RepoRun.objects(repo="threefoldtech/jumpscaleX", branch=branch).order_by("-timestamp")
+        for repo_run in repo_runs:
+            for result in repo_run.result:
+                if result["type"] == "testsuite":
+                    return render_template("template.html", **result["content"])
+
+    return abort(400)
 
 
 if __name__ == "__main__":

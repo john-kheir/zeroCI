@@ -5,6 +5,18 @@ import random
 import os
 import time
 from db import *
+import paramiko
+
+
+class Complete_Executuion:
+    returncode = None
+    stdout = None
+    stderr = None
+
+    def __init__(self, rc, out, err):
+        self.returncode = rc
+        self.stdout = out
+        self.stderr = err
 
 
 class VMS(Utils):
@@ -69,9 +81,17 @@ class VMS(Utils):
         :type timeout: int
         :return: subprocess object containing (returncode, stdout, stderr)
         """
-        target = "ssh -o 'StrictHostKeyChecking no' -p {} root@{} '{}'".format(port, ip, cmd)
-        response = self.execute_cmd(target, timeout=timeout)
-        return response
+        # target = "ssh -o 'StrictHostKeyChecking no' -p {} root@{} '{}'".format(port, ip, cmd)
+        # response = self.execute_cmd(target, timeout=timeout)
+        # return response
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
+        client.connect(hostname=ip, port=port)
+        sdtin, stdout, stderr = client.exec_command(cmd)
+        out = stdout.read().decode()
+        err = stderr.read().decode()
+        rc = stdout.channel.recv_exit_status()
+        return Complete_Executuion(rc, out, err)
 
     def prepare(self, prequisties):
         """Prepare the machine's parameters before creating it depend on the prequisties needed.
@@ -80,7 +100,10 @@ class VMS(Utils):
         :type prequisties: list
         """
         if "docker" in prequisties:
-            self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker_latest.flist"
+            self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker.flist"
+            self.disk_path = "/var/cache/{}.qcow2".format(self.random_string())
+            self.node.client.bash("qemu-img create -f qcow2 {} 30G".format(self.disk_path)).get()
+            self.media.append({"url": self.disk_path})
 
     def deploy_vm(self, prequisties=""):
         """Deploy a virtual machine on zos node.
@@ -100,7 +123,7 @@ class VMS(Utils):
         self.media = []
         self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu:18.04.flist"
         self.vm_name = self.random_string()
-        self.node_ip = "10.102.18.170"  # self.get_node()
+        self.node_ip = self.get_node()
         self.client_name = self.random_string()
         self.node = j.clients.zos.get(self.client_name, host=self.node_ip, password=self.jwt)
         self.port = random.randint(22000, 25000)
@@ -170,3 +193,5 @@ class VMS(Utils):
         """
         if self.node:
             self.node.client.kvm.destroy(uuid)
+        if self.media:
+            self.node.client.bash("rm -rf {}".format(self.disk_path)).get()
