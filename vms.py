@@ -81,17 +81,31 @@ class VMS(Utils):
         :type timeout: int
         :return: subprocess object containing (returncode, stdout, stderr)
         """
-        # target = "ssh -o 'StrictHostKeyChecking no' -p {} root@{} '{}'".format(port, ip, cmd)
-        # response = self.execute_cmd(target, timeout=timeout)
-        # return response
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
         client.connect(hostname=ip, port=port)
-        sdtin, stdout, stderr = client.exec_command(cmd)
-        out = stdout.read().decode()
-        err = stderr.read().decode()
-        rc = stdout.channel.recv_exit_status()
+        sdtin, stdout, stderr = client.exec_command(cmd, timeout=timeout)
+        try:
+            out = stdout.read().decode()
+            err = stderr.read().decode()
+            rc = stdout.channel.recv_exit_status()
+        except:
+            out.channel.close()
+            err = "Error Timeout Exceeded {}".format(timeout)
+            out = ""
+            rc = 124
         return Complete_Executuion(rc, out, err)
+
+    def get_remote_file(self, ip, port, remote_path, local_path):
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
+        client.connect(hostname=ip, port=port)
+        ftp = client.open_sftp()
+        try:
+            ftp.get(remote_path, local_path)
+            return True
+        except:
+            return False
 
     def prepare(self, prequisties):
         """Prepare the machine's parameters before creating it depend on the prequisties needed.
@@ -177,11 +191,11 @@ class VMS(Utils):
         cmd = envs + run_cmd
         response = self.execute_command(cmd, ip=node_ip, port=port, timeout=timeout)
         file_path = "{}/{}.xml".format(self.result_path, self.random_string())
-        copy_cmd = 'scp -P {port} -o "StrictHostKeyChecking no" root@{node_ip}:/test.xml {file_name}'.format(
-            port=port, file_name=file_path, node_ip=node_ip
-        )
-        response_2 = self.execute_cmd(cmd=copy_cmd, timeout=30)
-        if response_2.returncode:
+        remote_path = "/test.xml"
+        copied = self.get_remote_file(ip=node_ip, port=port, remote_path=remote_path, local_path=file_path)
+        if copied:
+            file_path = file_path
+        else:
             file_path = None
         return response, file_path
 
