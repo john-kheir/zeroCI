@@ -58,7 +58,7 @@ def triggar(**kwargs):
                 id = str(repo_run.id)
                 utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
 
-                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=8000)
+                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=15000)
                 return Response(job.get_id(), 200)
 
     return Response("Done", 200)

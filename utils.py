@@ -263,13 +263,15 @@ class Utils:
         git clone https://github.com/{repo}.git --branch {branch} &&
         cd {repo} &&
         git reset --hard {commit} &&
+        export DEBIAN_FRONTEND=noninteractive &&
+        apt-get install -y software-properties-common &&
         """.format(
             repo=repo_run.repo, branch=repo_run.branch, commit=repo_run.commit, org_repo_name=org_repo_name
         ).replace(
             "\n", " "
         )
 
-        script = self.github_get_content(repo=repo_run.repo, ref=repo_run.commit, file_path="0-ci.yaml")
+        script = self.github_get_content(repo=repo_run.repo, ref=repo_run.commit, file_path="zeroCI.yaml")
         if script:
             yaml_script = yaml.load(script)
             prequisties = yaml_script.get("prequisties")

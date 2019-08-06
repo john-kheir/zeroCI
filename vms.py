@@ -68,7 +68,7 @@ class VMS(Utils):
             ssh = self.load_ssh_key()
         return ssh
 
-    def execute_command(self, cmd, ip="", port=22, timeout=3600):
+    def execute_command(self, cmd, ip="", port=22, timeout=7200):
         """Execute a command on a remote machine using ssh.
 
         :param cmd: command to be executed on a remote machine.
@@ -83,7 +83,7 @@ class VMS(Utils):
         """
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
-        client.connect(hostname=ip, port=port)
+        client.connect(hostname=ip, port=port, timeout=30)
         sdtin, stdout, stderr = client.exec_command(cmd, timeout=timeout)
         try:
             out = stdout.read().decode()
@@ -99,7 +99,7 @@ class VMS(Utils):
     def get_remote_file(self, ip, port, remote_path, local_path):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
-        client.connect(hostname=ip, port=port)
+        client.connect(hostname=ip, port=port, timeout=30)
         ftp = client.open_sftp()
         try:
             ftp.get(remote_path, local_path)
