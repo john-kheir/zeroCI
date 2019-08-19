@@ -256,15 +256,15 @@ class Utils:
         repo_run = RepoRun.objects.get(id=id)
         org_repo_name = repo_run.repo.split("/")[0]
         clone = """apt-get update &&
-        apt-get install -y git python3-pip &&
+        export DEBIAN_FRONTEND=noninteractive &&
+        apt-get install -y git python3.6 python3-pip software-properties-common &&
+        apt-get install -y --reinstall python3-apt &&
         pip3 install black &&
         mkdir -p /opt/code/github/{org_repo_name} &&
         cd /opt/code/github/{org_repo_name} &&
         git clone https://github.com/{repo}.git --branch {branch} &&
-        cd {repo} &&
+        cd /opt/code/github/{repo} &&
         git reset --hard {commit} &&
-        export DEBIAN_FRONTEND=noninteractive &&
-        apt-get install -y software-properties-common &&
         """.format(
             repo=repo_run.repo, branch=repo_run.branch, commit=repo_run.commit, org_repo_name=org_repo_name
         ).replace(

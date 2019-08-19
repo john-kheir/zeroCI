@@ -8,6 +8,9 @@ from db import *
 import paramiko
 
 
+RETRIES = 5
+
+
 class Complete_Executuion:
     returncode = None
     stdout = None
@@ -30,13 +33,33 @@ class VMS(Utils):
         :return: list of farm ips
         :return type: list
         """
-        farm = j.sal_zos.farm.get("freefarm")
-        nodes = farm.list_nodes()
         ips = []
-        for node in nodes:
-            url = node["robot_address"]
-            ip = urlparse(url).hostname
-            ips.append(ip)
+        try:
+            farm = j.sal_zos.farm.get("freefarm")
+            nodes = farm.filter_online_nodes()
+            for node in nodes:
+                url = node["robot_address"]
+                ip = urlparse(url).hostname
+                ips.append(ip)
+        except:
+            ips = [
+                "10.102.178.130",
+                "10.102.191.143",
+                "10.102.117.236",
+                "10.102.104.231",
+                "10.102.234.229",
+                "10.102.71.171",
+                "10.102.96.237",
+                "10.102.167.219",
+                "10.102.141.236",
+                "10.102.113.188",
+                "10.102.186.165",
+                "10.102.64.213",
+                "10.102.189.153",
+                "10.102.227.115",
+                "10.102.115.21",
+                "10.102.57.140",
+            ]
         return ips
 
     def get_node(self):
@@ -84,13 +107,13 @@ class VMS(Utils):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
         client.connect(hostname=ip, port=port, timeout=30)
-        sdtin, stdout, stderr = client.exec_command(cmd, timeout=timeout)
+        _, stdout, stderr = client.exec_command(cmd, timeout=timeout)
         try:
             out = stdout.read().decode()
             err = stderr.read().decode()
             rc = stdout.channel.recv_exit_status()
         except:
-            out.channel.close()
+            stdout.channel.close()
             err = "Error Timeout Exceeded {}".format(timeout)
             out = ""
             rc = 124
@@ -136,23 +159,29 @@ class VMS(Utils):
         self.memory = 2048
         self.media = []
         self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu:18.04.flist"
-        self.vm_name = self.random_string()
-        self.node_ip = self.get_node()
-        self.client_name = self.random_string()
-        self.node = j.clients.zos.get(self.client_name, host=self.node_ip, password=self.jwt)
-        self.port = random.randint(22000, 25000)
-        self.ports = {self.port: 22}
-        self.prepare(prequisties=prequisties)
-        self.vm_uuid = self.node.client.kvm.create(
-            name=self.vm_name,
-            flist=self.flist,
-            port=self.ports,
-            memory=self.memory,
-            cpu=self.cpu,
-            nics=[{"type": "default"}],
-            config={"/root/.ssh/authorized_keys": self.ssh_key},
-            media=self.media,
-        )
+        for _ in range(RETRIES):
+            self.vm_name = self.random_string()
+            self.node_ip = self.get_node()
+            self.client_name = self.random_string()
+            self.node = j.clients.zos.get(self.client_name, host=self.node_ip, password=self.jwt)
+            self.port = random.randint(22000, 25000)
+            self.ports = {self.port: 22}
+            try:
+                self.prepare(prequisties=prequisties)
+                self.vm_uuid = self.node.client.kvm.create(
+                    name=self.vm_name,
+                    flist=self.flist,
+                    port=self.ports,
+                    memory=self.memory,
+                    cpu=self.cpu,
+                    nics=[{"type": "default"}],
+                    config={"/root/.ssh/authorized_keys": self.ssh_key},
+                    media=self.media,
+                )
+                break
+            except:
+                time.sleep(1)
+                self.vm_uuid = None
 
         time.sleep(40)
         if self.vm_uuid:
@@ -186,8 +215,8 @@ class VMS(Utils):
         :return: path to xml file if exist and subprocess object containing (returncode, stdout, stderr)
         """
         envs = ""
-        for env in self.environment.keys():
-            envs = envs + "export {}={}; ".format(env, self.environment[env])
+        # for env in self.environment.keys():
+        #     envs = envs + "export {}={}; ".format(env, self.environment[env])
         cmd = envs + run_cmd
         response = self.execute_command(cmd, ip=node_ip, port=port, timeout=timeout)
         file_path = "{}/{}.xml".format(self.result_path, self.random_string())
