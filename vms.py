@@ -91,7 +91,7 @@ class VMS(Utils):
             ssh = self.load_ssh_key()
         return ssh
 
-    def execute_command(self, cmd, ip="", port=22, timeout=7200):
+    def execute_command(self, cmd, ip="", port=22, timeout=7200, environment={}):
         """Execute a command on a remote machine using ssh.
 
         :param cmd: command to be executed on a remote machine.
@@ -107,7 +107,7 @@ class VMS(Utils):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
         client.connect(hostname=ip, port=port, timeout=30)
-        _, stdout, stderr = client.exec_command(cmd, timeout=timeout)
+        _, stdout, stderr = client.exec_command(cmd, timeout=timeout, environment=environment)
         try:
             out = stdout.read().decode()
             err = stderr.read().decode()
@@ -198,7 +198,7 @@ class VMS(Utils):
         :param install_script: bash script to install script
         :type install_script: str
         """
-        response = self.execute_command(cmd=install_script, ip=node_ip, port=port)
+        response = self.execute_command(cmd=install_script, ip=node_ip, port=port, environment=self.environment)
         return response
 
     def run_test(self, run_cmd, node_ip, port, timeout):
@@ -214,11 +214,7 @@ class VMS(Utils):
         :type timeout: int
         :return: path to xml file if exist and subprocess object containing (returncode, stdout, stderr)
         """
-        envs = ""
-        # for env in self.environment.keys():
-        #     envs = envs + "export {}={}; ".format(env, self.environment[env])
-        cmd = envs + run_cmd
-        response = self.execute_command(cmd, ip=node_ip, port=port, timeout=timeout)
+        response = self.execute_command(run_cmd, ip=node_ip, port=port, timeout=timeout, environment=self.environment)
         file_path = "{}/{}.xml".format(self.result_path, self.random_string())
         remote_path = "/test.xml"
         copied = self.get_remote_file(ip=node_ip, port=port, remote_path=remote_path, local_path=file_path)

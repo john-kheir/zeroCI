@@ -13,28 +13,26 @@ from mongoengine import connect
 from db import *
 import xmltodict
 import yaml
+import toml
 
 ansi_escape = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 
 
 class Utils:
     def __init__(self):
-        config = configparser.ConfigParser()
-        config.optionxform = str
-        config.read("config.ini")
+        config = toml.load("config.toml")
         self.iyo_id = config["iyo"]["id"]
         self.iyo_secret = config["iyo"]["secret"]
         self.serverip = config["main"]["server_ip"]
+        self.result_path = config["main"]["result_path"]
         self.chat_id = config["telegram"]["chat_id"]
         self.bot_token = config["telegram"]["token"]
         self.github_token = config["github"]["token"]
-        self.repo = config["github"]["repo"].split(",")
-        self.result_path = config["main"]["result_path"]
-        self.project_path = config["main"]["project_path"]
+        self.repo = config["github"]["repo"]
         self.db_name = config["db"]["name"]
         self.db_host = config["db"]["host"]
-        self.db_port = int(config["db"]["port"])
-        self.environment = self.export_var(config)
+        self.db_port = config["db"]["port"]
+        self.environment = config["environment"]
         self.github_cl = Github(self.github_token)
         self.telegram_cl = Bot(self.bot_token)
         self.db_connect(db_name=self.db_name, host=self.db_host, port=self.db_port)
@@ -179,19 +177,6 @@ class Utils:
             commit=repo_run.commit,
             committer=repo_run.committer,
         )
-
-    def export_var(self, config):
-        """Prepare environment variables from config file.
-
-        :param config: secret stored in config.ini file.
-        """
-        exports = config["exports"]
-        exps = {}
-        for _ in exports:
-            exp = exports.popitem()
-            exps[exp[0]] = exp[1]
-
-        return exps
 
     def xml_parse(self, path, line):
         """Parse the xml file resulted from junit.

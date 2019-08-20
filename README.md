@@ -38,7 +38,7 @@
 - Install mongodb `apt-get install -y mongodb`
 - Install redis `apt-get install -y redis`
 - Install packages required `pip3 install -r requirement.txt`
-- config.ini:
+- config.toml:
 
 ```
 [main]
@@ -62,7 +62,7 @@ name=                               # db name will be used to store the result i
 host=                               # hostname that mongodb is running on (exp: localhost)
 port=                               # port that mongodb is running on
 
-[exports]                           # under this a list of environment variables needed to be exported before running tests.
+[environment]                       # under this a list of environment variables needed to be exported before running tests.
 ```
 
 - Add server IP as webhook in Repository's settings.
