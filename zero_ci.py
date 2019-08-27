@@ -44,7 +44,8 @@ def triggar(**kwargs):
             branch = reference.split("/")[-1]
             commit = request.json["after"]
             committer = request.json["pusher"]["name"]
-            if repo == utils.repo[0]:
+            deleted = request.json["deleted"]
+            if repo in utils.repo and deleted == False:
                 status = "pending"
                 repo_run = RepoRun(
                     timestamp=datetime.now().timestamp(),
@@ -58,7 +59,7 @@ def triggar(**kwargs):
                 id = str(repo_run.id)
                 utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
 
-                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=15000)
+                job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=20000)
                 return Response(job.get_id(), 200)
 
     return Response("Done", 200)

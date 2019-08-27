@@ -129,7 +129,7 @@ class Actions(Utils):
         if uuid:
             if not response.returncode:
                 self.test_black(node_ip=node_ip, port=port, id=id, db_run=RepoRun, timeout=500)
-                self.test_run(node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=RepoRun, timeout=7200)
+                self.test_run(node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=RepoRun, timeout=15000)
                 self.cal_status(id=id, db_run=RepoRun)
             vms.destroy_vm(uuid)
         self.report(id=id)
