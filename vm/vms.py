@@ -1,11 +1,13 @@
-from utils import Utils
-from Jumpscale import j
-from urllib.parse import urlparse
-import random
 import os
 import time
-from db import *
+import random
+from urllib.parse import urlparse
+
+from Jumpscale import j
 import paramiko
+
+from utils.utils import Utils
+from mongodb.db import *
 
 
 RETRIES = 5

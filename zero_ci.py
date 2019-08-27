@@ -1,18 +1,19 @@
-from flask import Flask, request, send_file, render_template, abort, redirect, Response
-from utils import Utils
 from datetime import datetime
-from db import *
 import os
 import json
-import atexit
-from builders import builders
+
+from flask import Flask, request, send_file, render_template, abort, Response
+from mongodb.db import *
 from rq import Queue
 from rq.job import Job
-from worker import conn
-from actions import Actions
 from flask_cors import CORS
 from rq_scheduler import Scheduler
 from redis import Redis
+
+from utils.utils import Utils
+from rqs.worker import conn
+from actions.actions import Actions
+
 
 utils = Utils()
 actions = Actions()
@@ -37,7 +38,6 @@ def triggar(**kwargs):
     """Triggar the test when a post request is sent from a repo's webhook.
     """
     if request.headers.get("Content-Type") == "application/json":
-        # push case
         reference = request.json.get("ref")
         if reference:
             repo = request.json["repository"]["full_name"]
@@ -193,18 +193,18 @@ def status():
     if project:
         project_run = ProjectRun.objects(name=project, status__ne="pending").order_by("-timestamp").first()
         if project_run.status == "success":
-            return send_file("{}_passing.svg".format(project), mimetype="image/svg+xml")
+            return send_file("svgs/{}_passing.svg".format(project), mimetype="image/svg+xml")
         else:
-            return send_file("{}_failing.svg".format(project), mimetype="image/svg+xml")
+            return send_file("svgs/{}_failing.svg".format(project), mimetype="image/svg+xml")
 
     elif repo:
         if not branch:
             branch = "master"
         repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp")
         if repo_run.status == "success":
-            return send_file("build_passing.svg", mimetype="image/svg+xml")
+            return send_file("svgs/build_passing.svg", mimetype="image/svg+xml")
         else:
-            return send_file("build_failing.svg", mimetype="image/svg+xml")
+            return send_file("svgs/build_failing.svg", mimetype="image/svg+xml")
 
     return abort(404)
 

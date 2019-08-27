@@ -1,5 +1,4 @@
-import mongoengine
-from mongoengine import fields, Document
+from mongoengine import fields, Document, connect
 
 
 class RepoRun(Document):

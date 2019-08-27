@@ -1,8 +1,10 @@
-from utils import Utils
-from db import *
 import os
-from vms import VMS
 from datetime import datetime
+
+from utils.utils import Utils
+from mongodb.db import *
+from vm.vms import VMS
+
 
 vms = VMS()
 
