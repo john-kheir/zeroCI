@@ -10,13 +10,16 @@ from flask_cors import CORS
 from rq_scheduler import Scheduler
 from redis import Redis
 
-from utils.utils import Utils
+from utils.config import Configs
+from githubs.githubs import Github
 from rqs.worker import conn
 from actions.actions import Actions
 
 
-utils = Utils()
+configs = Configs()
 actions = Actions()
+github = Github()
+DB()
 
 app = Flask(__name__)
 CORS(app)
@@ -45,7 +48,7 @@ def triggar(**kwargs):
             commit = request.json["after"]
             committer = request.json["pusher"]["name"]
             deleted = request.json["deleted"]
-            if repo in utils.repo and deleted == False:
+            if repo in configs.repos and deleted == False:
                 status = "pending"
                 repo_run = RepoRun(
                     timestamp=datetime.now().timestamp(),
@@ -57,7 +60,7 @@ def triggar(**kwargs):
                 )
                 repo_run.save()
                 id = str(repo_run.id)
-                utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
+                github.status_send(status=status, link=configs.serverip, repo=repo, commit=commit)
 
                 job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=20000)
                 return Response(job.get_id(), 200)
@@ -75,7 +78,7 @@ def add_project():
         run_time = request.json.get("run_time")
         authentication = request.json.get("authentication")
         timeout = request.json.get("timeout", 3600)
-        if authentication == utils.github_token:
+        if authentication == configs.github_token:
             if not (
                 isinstance(project_name, str)
                 and isinstance(install_script, str)
@@ -110,7 +113,7 @@ def remove_project():
     if request.headers.get("Content-Type") == "application/json":
         project_name = request.json.get("project_name")
         authentication = request.json.get("authentication")
-        if authentication == utils.github_token:
+        if authentication == configs.github_token:
             scheduler.cancel(project_name)
         return "Removed", 200
 
@@ -200,7 +203,7 @@ def status():
     elif repo:
         if not branch:
             branch = "master"
-        repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp")
+        repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp").first()
         if repo_run.status == "success":
             return send_file("svgs/build_passing.svg", mimetype="image/svg+xml")
         else:
@@ -239,5 +242,5 @@ def state():
 
 
 if __name__ == "__main__":
-    port = int(utils.serverip.split(":")[-1])
+    port = int(configs.serverip.split(":")[-1])
     app.run("0.0.0.0", port)

@@ -1,5 +1,7 @@
 from mongoengine import fields, Document, connect
 
+from utils.config import Configs
+
 
 class RepoRun(Document):
     timestamp = fields.FloatField(required=True)
@@ -20,3 +22,12 @@ class ProjectRun(Document):
     result = fields.ListField(default=[])
 
     meta = {"collection": "project"}
+
+
+class DB(Configs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.db_connect()
+
+    def db_connect(self):
+        connect(db=self.db_name, host=self.db_host, port=self.db_port)

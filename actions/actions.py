@@ -1,15 +1,19 @@
 import os
 from datetime import datetime
 
-from utils.utils import Utils
+from utils.config import Configs
+from utils.reporter import Reporter
+from githubs.githubs import Github
 from mongodb.db import *
 from vm.vms import VMS
 
-
+DB()
 vms = VMS()
+github = Github()
+reporter = Reporter()
 
 
-class Actions(Utils):
+class Actions(Configs):
     def test_run(self, node_ip, port, id, test_script, db_run, timeout):
         """Runs tests with specific commit and store the result in DB.
         
@@ -74,7 +78,7 @@ class Actions(Utils):
             {"type": "log", "status": status, "name": "Black Formatting", "content": response.stderr}
         )
         repo_run.save()
-        self.github_status_send(
+        github.status_send(
             status=status, link=link, repo=repo_run.repo, commit=repo_run.commit, context="Black-Formatting"
         )
 
@@ -124,7 +128,7 @@ class Actions(Utils):
         :param id: DB id of this commit details.
         :type id: str
         """
-        prequisties, install_script, test_script = self.install_test_scripts(id=id)
+        prequisties, install_script, test_script = github.install_test_scripts(id=id)
         uuid, response, node_ip, port = self.build(
             install_script=install_script, id=id, db_run=RepoRun, prequisties=prequisties
         )
@@ -134,7 +138,7 @@ class Actions(Utils):
                 self.test_run(node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=RepoRun, timeout=15000)
                 self.cal_status(id=id, db_run=RepoRun)
             vms.destroy_vm(uuid)
-        self.report(id=id)
+        reporter.report(id=id, db_run=RepoRun)
 
     def run_project(self, project_name, install_script, test_script, prequisties, timeout):
         status = "pending"
@@ -154,9 +158,4 @@ class Actions(Utils):
 
             vms.destroy_vm(uuid)
 
-        if project_run.status == "success":
-            self.send_msg("✅ {} tests passed {}".format(project_name, self.serverip))
-        elif project_run.status == "failure":
-            self.send_msg("❌ {} tests failed {}".format(project_name, self.serverip))
-        else:
-            self.send_msg("⛔️ {} tests errored {}".format(project_name, self.serverip))
+        reporter.report(id=id, db_run=RepoRun, project_name=project_name)
