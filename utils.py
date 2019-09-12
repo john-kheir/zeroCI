@@ -71,7 +71,6 @@ class Utils:
         :type committer: str
         """
         if commit:
-            repo = repo[repo.find("/") + 1 :]
             msg = "\n".join([msg, repo, branch, committer, commit])
         for _ in range(0, 5):
             try:
@@ -163,7 +162,8 @@ class Utils:
         :type committer: str
         """
         repo_run = RepoRun.objects.get(id=id)
-        self.github_status_send(status=repo_run.status, repo=repo_run.repo, link=self.serverip, commit=repo_run.commit)
+        link = f"{self.serverip}/repos/{repo_run.repo}?id={str(repo_run.id)}"
+        self.github_status_send(status=repo_run.status, repo=repo_run.repo, link=link, commit=repo_run.commit)
         if repo_run.status == "success":
             msg = "✅ Tests passed "
         elif repo_run.status == "failure":
@@ -171,7 +171,7 @@ class Utils:
         else:
             msg = "⛔️ Tests errored "
         self.send_msg(
-            msg=msg + self.serverip,
+            msg=msg + link,
             repo=repo_run.repo,
             branch=repo_run.branch,
             commit=repo_run.commit,
@@ -240,12 +240,7 @@ class Utils:
         """
         repo_run = RepoRun.objects.get(id=id)
         org_repo_name = repo_run.repo.split("/")[0]
-        clone = """apt-get update &&
-        export DEBIAN_FRONTEND=noninteractive &&
-        apt-get install -y git python3.6 python3-pip software-properties-common &&
-        apt-get install -y --reinstall python3-apt &&
-        pip3 install black &&
-        mkdir -p /opt/code/github/{org_repo_name} &&
+        clone = """mkdir -p /opt/code/github/{org_repo_name} &&
         cd /opt/code/github/{org_repo_name} &&
         git clone https://github.com/{repo}.git --branch {branch} &&
         cd /opt/code/github/{repo} &&

@@ -136,12 +136,12 @@ def branch(repo):
     """
     branch = request.args.get("branch")
     id = request.args.get("id")
-    if branch:
-        if id:
-            repo_run = RepoRun.objects.get(id=id, repo=repo, branch=branch)
-            result = json.dumps(repo_run.result)
-            return result
 
+    if id:
+        repo_run = RepoRun.objects.get(id=id, repo=repo)
+        result = json.dumps(repo_run.result)
+        return result
+    if branch:
         repo_runs = RepoRun.objects(repo=repo, branch=branch).order_by("-timestamp")
         details = []
         for repo_run in repo_runs:
@@ -189,9 +189,12 @@ def status():
     project = request.args.get("project")
     repo = request.args.get("repo")
     branch = request.args.get("branch")
-    # file = request.args.get("file")  # to return the run result
+    result = request.args.get("result")  # to return the run result
     if project:
         project_run = ProjectRun.objects(name=project, status__ne="pending").order_by("-timestamp").first()
+        if result:
+            link = f"{utils.serverip}/projects/{project}?id={str(project_run.id)}"
+            return redirect(link)
         if project_run.status == "success":
             return send_file("{}_passing.svg".format(project), mimetype="image/svg+xml")
         else:
@@ -200,7 +203,10 @@ def status():
     elif repo:
         if not branch:
             branch = "master"
-        repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp")
+        repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp").first()
+        if result:
+            link = f"{utils.serverip}/repos/{repo}?branch={branch}&&id={str(repo_run.id)}"
+            return redirect(link)
         if repo_run.status == "success":
             return send_file("build_passing.svg", mimetype="image/svg+xml")
         else:

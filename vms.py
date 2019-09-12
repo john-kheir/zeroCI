@@ -198,7 +198,9 @@ class VMS(Utils):
         :param install_script: bash script to install script
         :type install_script: str
         """
-        response = self.execute_command(cmd=install_script, ip=node_ip, port=port, environment=self.environment)
+        prepare_script = self.prepare_script()
+        script = prepare_script + install_script
+        response = self.execute_command(cmd=script, ip=node_ip, port=port, environment=self.environment)
         return response
 
     def run_test(self, run_cmd, node_ip, port, timeout):
@@ -234,3 +236,11 @@ class VMS(Utils):
             self.node.client.kvm.destroy(uuid)
         if self.media:
             self.node.client.bash("rm -rf {}".format(self.disk_path)).get()
+
+    def prepare_script(self):
+        return """apt-get update &&
+        export DEBIAN_FRONTEND=noninteractive &&
+        apt-get install -y git python3.6 python3-pip software-properties-common &&
+        apt-get install -y --reinstall python3-apt &&
+        pip3 install black &&
+        """
