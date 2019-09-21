@@ -100,7 +100,7 @@ class Utils:
             f.write(text + "\n")
 
     def github_status_send(
-        self, status, link, repo, commit, description="JSX-machine for testing", context="continuous-integration/0-Test"
+        self, status, link, repo, commit, description="JSX-machine for testing", context="continuous-integration/zeroCI"
     ):
         """Change github commit status.
         
@@ -162,7 +162,8 @@ class Utils:
         :type committer: str
         """
         repo_run = RepoRun.objects.get(id=id)
-        link = f"{self.serverip}/repos/{repo_run.repo}?id={str(repo_run.id)}"
+        # link = f"{self.serverip}/repos/{repo_run.repo}?id={str(repo_run.id)}"
+        link = f"{self.serverip}/get_status?id={str(repo_run.id)}&n={len(repo_run.result)}"
         self.github_status_send(status=repo_run.status, repo=repo_run.repo, link=link, commit=repo_run.commit)
         if repo_run.status == "success":
             msg = "✅ Tests passed "

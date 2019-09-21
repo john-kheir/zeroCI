@@ -136,11 +136,20 @@ class VMS(Utils):
         :param prequisties: list of prequisties needed.
         :type prequisties: list
         """
-        if "docker" in prequisties:
+        if {"docker", "jsx"}.issubset(set(prequisties)):
+            self.flist = "https://hub.grid.tf/qa_tft_1/jsx_docker.flist"
+            self.disk_path = "/var/cache/{}.qcow2".format(self.random_string())
+            self.node.client.bash("qemu-img create -f qcow2 {} 30G".format(self.disk_path)).get()
+            self.media.append({"url": self.disk_path})
+
+        elif "docker" in prequisties:
             self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker.flist"
             self.disk_path = "/var/cache/{}.qcow2".format(self.random_string())
             self.node.client.bash("qemu-img create -f qcow2 {} 30G".format(self.disk_path)).get()
             self.media.append({"url": self.disk_path})
+
+        elif "jsx" in prequisties:
+            self.flist = "https://hub.grid.tf/qa_tft_1/jsx.flist"
 
     def deploy_vm(self, prequisties=""):
         """Deploy a virtual machine on zos node.

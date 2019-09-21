@@ -5,7 +5,6 @@ from db import *
 import os
 import json
 import atexit
-from builders import builders
 from rq import Queue
 from rq.job import Job
 from worker import conn
@@ -17,8 +16,9 @@ from redis import Redis
 utils = Utils()
 actions = Actions()
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__, static_folder="./dist/static", template_folder="./dist")
+
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 q = Queue(connection=conn)
 scheduler = Scheduler(connection=Redis())
@@ -65,7 +65,7 @@ def triggar(**kwargs):
     return Response("Done", 200)
 
 
-@app.route("/add_project", methods=["POST"])
+@app.route("/api/add_project", methods=["POST"])
 def add_project():
     if request.headers.get("Content-Type") == "application/json":
         project_name = request.json.get("project_name")
@@ -78,13 +78,16 @@ def add_project():
         if authentication == utils.github_token:
             if not (
                 isinstance(project_name, str)
-                and isinstance(install_script, str)
+                and isinstance(install_script, (str, list))
                 and isinstance(test_script, (str, list))
-                and isinstance(prequisties, str)
+                and isinstance(prequisties, (str, list))
                 and isinstance(run_time, str)
                 and isinstance(timeout, int)
             ):
                 return Response("Wrong data", 400)
+
+            if isinstance(install_script, list):
+                install_script = " && ".join(install_script)
 
             if isinstance(test_script, str):
                 test_script = [test_script]
@@ -105,7 +108,7 @@ def add_project():
     return Response("", 404)
 
 
-@app.route("/remove_project", methods=["POST"])
+@app.route("/api/remove_project", methods=["POST"])
 def remove_project():
     if request.headers.get("Content-Type") == "application/json":
         project_name = request.json.get("project_name")
@@ -115,7 +118,7 @@ def remove_project():
         return "Removed", 200
 
 
-@app.route("/")
+@app.route("/api/")
 def home():
     """Return repos and projects which are running on the server.
     """
@@ -126,7 +129,7 @@ def home():
     return result_json, 200
 
 
-@app.route("/repos/<path:repo>")
+@app.route("/api/repos/<path:repo>")
 def branch(repo):
     """Returns tests ran on this repo with specific branch or test details if id is sent.
 
@@ -161,7 +164,7 @@ def branch(repo):
     return result
 
 
-@app.route("/projects/<project>")
+@app.route("/api/projects/<project>")
 def project(project):
     """Returns tests ran on this project or test details if id is sent.
 
@@ -242,6 +245,12 @@ def state():
                     return render_template("template.html", **result["content"])
 
     return abort(400)
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def catch_all(path):
+    return render_template("index.html")
 
 
 if __name__ == "__main__":

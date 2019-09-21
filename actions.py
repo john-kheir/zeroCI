@@ -62,7 +62,8 @@ class Actions(Utils):
         :type id: str
         """
         repo_run = db_run.objects.get(id=id)
-        link = self.serverip
+        # link = link = f"{self.serverip}/repos/{repo_run.repo}?id={str(repo_run.id)}"
+        link = f"{self.serverip}/get_status?id={str(repo_run.id)}&n=1"
         status = "success"
         line = "black /opt/code/github/{} -l 120 -t py37 --diff --exclude 'templates'".format(repo_run.repo)
         response, file = vms.run_test(run_cmd=line, node_ip=node_ip, port=port, timeout=timeout)
@@ -96,7 +97,7 @@ class Actions(Utils):
                 self.cal_status(id=id, db_run=db_run)
         else:
             repo_run = db_run.objects.get(id=id)
-            repo_run.result.append({"type": "log", "status": "success", "content": "Didn't find something to install"})
+            repo_run.result.append({"type": "log", "status": "error", "content": "Didn't find something to install"})
             repo_run.save()
             self.cal_status(id=id, db_run=db_run)
 
