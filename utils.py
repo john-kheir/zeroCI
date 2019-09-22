@@ -23,7 +23,7 @@ class Utils:
         config = toml.load("config.toml")
         self.iyo_id = config["iyo"]["id"]
         self.iyo_secret = config["iyo"]["secret"]
-        self.serverip = config["main"]["server_ip"]
+        self.domain = config["main"]["domain"]
         self.result_path = config["main"]["result_path"]
         self.chat_id = config["telegram"]["chat_id"]
         self.bot_token = config["telegram"]["token"]
@@ -162,8 +162,8 @@ class Utils:
         :type committer: str
         """
         repo_run = RepoRun.objects.get(id=id)
-        # link = f"{self.serverip}/repos/{repo_run.repo}?id={str(repo_run.id)}"
-        link = f"{self.serverip}/get_status?id={str(repo_run.id)}&n={len(repo_run.result)}"
+        # link = f"{self.domain}/repos/{repo_run.repo}?id={str(repo_run.id)}"
+        link = f"{self.domain}/get_status?id={str(repo_run.id)}&n={len(repo_run.result)}"
         self.github_status_send(status=repo_run.status, repo=repo_run.repo, link=link, commit=repo_run.commit)
         if repo_run.status == "success":
             msg = "✅ Tests passed "

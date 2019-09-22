@@ -42,7 +42,7 @@
 
 ```
 [main]
-server_ip=                          # (http://ip:port) ip should be public
+domain=                             # The domain that will point to your server
 result_path=                        # The result log file will stored in
 
 [telegram]

@@ -1,5 +1,5 @@
 [main]
-server_ip=""
+domain=""
 result_path=""
 
 [telegram]

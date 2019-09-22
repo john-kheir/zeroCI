@@ -57,7 +57,7 @@ def triggar(**kwargs):
                 )
                 repo_run.save()
                 id = str(repo_run.id)
-                utils.github_status_send(status=status, link=utils.serverip, repo=repo, commit=commit)
+                utils.github_status_send(status=status, link=utils.domain, repo=repo, commit=commit)
 
                 job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=20000)
                 return Response(job.get_id(), 200)
@@ -196,7 +196,7 @@ def status():
     if project:
         project_run = ProjectRun.objects(name=project, status__ne="pending").order_by("-timestamp").first()
         if result:
-            link = f"{utils.serverip}/projects/{project}?id={str(project_run.id)}"
+            link = f"{utils.domain}/projects/{project}?id={str(project_run.id)}"
             return redirect(link)
         if project_run.status == "success":
             return send_file("{}_passing.svg".format(project), mimetype="image/svg+xml")
@@ -208,7 +208,7 @@ def status():
             branch = "master"
         repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp").first()
         if result:
-            link = f"{utils.serverip}/repos/{repo}?branch={branch}&&id={str(repo_run.id)}"
+            link = f"{utils.domain}/repos/{repo}?branch={branch}&&id={str(repo_run.id)}"
             return redirect(link)
         if repo_run.status == "success":
             return send_file("build_passing.svg", mimetype="image/svg+xml")
@@ -254,5 +254,4 @@ def catch_all(path):
 
 
 if __name__ == "__main__":
-    port = int(utils.serverip.split(":")[-1])
-    app.run("0.0.0.0", port)
+    app.run("0.0.0.0", 6010)
