@@ -208,7 +208,7 @@ def status():
             branch = "master"
         repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp").first()
         if result:
-            link = f"{utils.domain}/repos/{repo}?branch={branch}&&id={str(repo_run.id)}"
+            link = f"{utils.domain}/repos/{repo.replace('/', '%2F')}/{branch}/{str(repo_run.id)}"
             return redirect(link)
         if repo_run.status == "success":
             return send_file("build_passing.svg", mimetype="image/svg+xml")
@@ -228,7 +228,13 @@ def state():
         n = "1"
     if n.isnumeric():
         if id:
-            repo_run = RepoRun.objects.get(id=id)
+            try:
+                repo_run = RepoRun.objects.get(id=id)
+            except:
+                try:
+                    repo_run = ProjectRun.objects.get(id=id)
+                except:
+                    return abort(404)
             if int(n) <= len(repo_run.result):
                 result = repo_run.result[int(n) - 1]
                 if result["type"] == "testsuite":

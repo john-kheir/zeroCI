@@ -62,8 +62,8 @@ class Actions(Utils):
         :type id: str
         """
         repo_run = db_run.objects.get(id=id)
-        # link = link = f"{self.domain}/repos/{repo_run.repo}?id={str(repo_run.id)}"
-        link = f"{self.domain}/get_status?id={str(repo_run.id)}&n=1"
+        link = f"{self.domain}/repos/{repo_run.repo.replace('/', '%2F')}/{repo_run.branch}/{str(repo_run.id)}"
+        # link = f"{self.domain}/get_status?id={str(repo_run.id)}&n=1"
         status = "success"
         line = "black /opt/code/github/{} -l 120 -t py37 --diff --exclude 'templates'".format(repo_run.repo)
         response, file = vms.run_test(run_cmd=line, node_ip=node_ip, port=port, timeout=timeout)
@@ -85,19 +85,25 @@ class Actions(Utils):
                 if response.returncode:
                     repo_run = db_run.objects.get(id=id)
                     content = "stdout:\n" + response.stdout + "\nstderr:\n" + response.stderr
-                    repo_run.result.append({"type": "log", "status": "error", "content": content})
+                    repo_run.result.append(
+                        {"type": "log", "status": "error", "name": "Installation", "content": content}
+                    )
                     repo_run.save()
                     self.cal_status(id=id, db_run=db_run)
                 return uuid, response, node_ip, port
 
             else:
                 repo_run = db_run.objects.get(id=id)
-                repo_run.result.append({"type": "log", "status": "error", "content": "Couldn't deploy a vm"})
+                repo_run.result.append(
+                    {"type": "log", "status": "error", "name": "Deploy", "content": "Couldn't deploy a vm"}
+                )
                 repo_run.save()
                 self.cal_status(id=id, db_run=db_run)
         else:
             repo_run = db_run.objects.get(id=id)
-            repo_run.result.append({"type": "log", "status": "error", "content": "Didn't find something to install"})
+            repo_run.result.append(
+                {"type": "log", "status": "error", "name": "ZeroCI", "content": "Didn't find something to install"}
+            )
             repo_run.save()
             self.cal_status(id=id, db_run=db_run)
 
@@ -130,7 +136,7 @@ class Actions(Utils):
         if uuid:
             if not response.returncode:
                 self.test_black(node_ip=node_ip, port=port, id=id, db_run=RepoRun, timeout=500)
-                self.test_run(node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=RepoRun, timeout=15000)
+                self.test_run(node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=RepoRun, timeout=3600)
                 self.cal_status(id=id, db_run=RepoRun)
             vms.destroy_vm(uuid)
         self.report(id=id)
@@ -153,9 +159,11 @@ class Actions(Utils):
 
             vms.destroy_vm(uuid)
 
+        link = f"{self.domain}/projects/{project_run.name.replace(' ', '%20')}/{str(project_run.id)}"
+        # link = f"{self.domain}/get_status?id={str(project_run.id)}&n=1"
         if project_run.status == "success":
-            self.send_msg("✅ {} tests passed {}".format(project_name, self.domain))
+            self.send_msg("✅ {} tests passed".format(project_name), link)
         elif project_run.status == "failure":
-            self.send_msg("❌ {} tests failed {}".format(project_name, self.domain))
+            self.send_msg("❌ {} tests failed".format(project_name), link)
         else:
-            self.send_msg("⛔️ {} tests errored {}".format(project_name, self.domain))
+            self.send_msg("⛔️ {} tests errored".format(project_name), link)

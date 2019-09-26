@@ -164,8 +164,8 @@ class VMS(Utils):
         )
         self.jwt = iyo.jwt_get(scope="user:memberof:threefold.sysadmin").jwt
         self.ssh_key = self.load_ssh_key()
-        self.cpu = 2
-        self.memory = 2048
+        self.cpu = 4
+        self.memory = 4096
         self.media = []
         self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu:18.04.flist"
         for _ in range(RETRIES):
