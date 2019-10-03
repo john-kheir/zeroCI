@@ -231,6 +231,8 @@ class VMS(Utils):
         copied = self.get_remote_file(ip=node_ip, port=port, remote_path=remote_path, local_path=file_path)
         if copied:
             file_path = file_path
+            delete_cmd = f"rm -f {remote_path}"
+            self.execute_command(delete_cmd, ip=node_ip, port=port, timeout=30)
         else:
             file_path = None
         return response, file_path

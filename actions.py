@@ -48,10 +48,10 @@ class Actions(Utils):
                     name = "cmd {}".format(i + 1)
                     content = "stdout:\n" + response.stdout + "\nstderr:\n" + response.stderr
                     repo_run.result.append({"type": "log", "status": status, "name": name, "content": content})
+                repo_run.save()
         else:
-
             repo_run.result.append({"type": "log", "status": status, "name": "No tests", "content": "No tests found"})
-        repo_run.save()
+            repo_run.save()
 
     def test_black(self, node_ip, port, id, db_run, timeout):
         """Runs black formatting test on the repo with specific commit.
@@ -64,11 +64,14 @@ class Actions(Utils):
         repo_run = db_run.objects.get(id=id)
         link = f"{self.domain}/repos/{repo_run.repo.replace('/', '%2F')}/{repo_run.branch}/{str(repo_run.id)}"
         # link = f"{self.domain}/get_status?id={str(repo_run.id)}&n=1"
-        status = "success"
         line = "black /opt/code/github/{} -l 120 -t py37 --diff --exclude 'templates'".format(repo_run.repo)
         response, file = vms.run_test(run_cmd=line, node_ip=node_ip, port=port, timeout=timeout)
-        if "reformatted" in response.stderr:
+        if response.returncode:
             status = "failure"
+        elif "reformatted" in response.stderr:
+            status = "failure"
+        else:
+            status = "success"
         repo_run.result.append(
             {"type": "log", "status": status, "name": "Black Formatting", "content": response.stderr}
         )
