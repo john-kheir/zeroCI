@@ -145,7 +145,8 @@ def branch(repo):
         result = json.dumps(repo_run.result)
         return result
     if branch:
-        repo_runs = RepoRun.objects(repo=repo, branch=branch).order_by("-timestamp")
+        fields = ["status", "commit", "committer", "timestamp"]
+        repo_runs = RepoRun.objects(repo=repo, branch=branch).only(*fields).order_by("-timestamp")
         details = []
         for repo_run in repo_runs:
             details.append(
@@ -177,7 +178,8 @@ def project(project):
         result = json.dumps(project_run.result)
         return result
 
-    project_runs = ProjectRun.objects(name=project).order_by("-timestamp")
+    fields = ["status", "timestamp"]
+    project_runs = ProjectRun.objects(name=project).only(*fields).order_by("-timestamp")
     details = []
     for project_run in project_runs:
         details.append({"timestamp": project_run.timestamp, "status": project_run.status, "id": str(project_run.id)})
@@ -193,8 +195,11 @@ def status():
     repo = request.args.get("repo")
     branch = request.args.get("branch")
     result = request.args.get("result")  # to return the run result
+    fields = ["status"]
     if project:
-        project_run = ProjectRun.objects(name=project, status__ne="pending").order_by("-timestamp").first()
+        project_run = (
+            ProjectRun.objects(name=project, status__ne="pending").only(*fields).order_by("-timestamp").first()
+        )
         if result:
             link = f"{utils.domain}/projects/{project}?id={str(project_run.id)}"
             return redirect(link)
@@ -206,7 +211,9 @@ def status():
     elif repo:
         if not branch:
             branch = "master"
-        repo_run = RepoRun.objects(repo=repo, branch=branch, status__ne="pending").order_by("-timestamp").first()
+        repo_run = (
+            RepoRun.objects(repo=repo, branch=branch, status__ne="pending").only(*fields).order_by("-timestamp").first()
+        )
         if result:
             link = f"{utils.domain}/repos/{repo.replace('/', '%2F')}/{branch}/{str(repo_run.id)}"
             return redirect(link)
@@ -220,7 +227,7 @@ def status():
 
 @app.route("/get_status")
 def state():
-    """Api for last status of the tests on branch development _jumpscale_testing.
+    """Return the result of a run using id.
     """
     n = request.args.get("n")
     id = request.args.get("id")
@@ -241,14 +248,6 @@ def state():
                     return render_template("template.html", **result["content"])
                 else:
                     return render_template("result.html", content=result["content"])
-
-    branch = request.args.get("branch")
-    if branch:
-        repo_runs = RepoRun.objects(repo="threefoldtech/jumpscaleX", branch=branch).order_by("-timestamp")
-        for repo_run in repo_runs:
-            for result in repo_run.result:
-                if result["type"] == "testsuite":
-                    return render_template("template.html", **result["content"])
 
     return abort(400)
 
