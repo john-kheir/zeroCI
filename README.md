@@ -1,6 +1,6 @@
 ## Zero Continuous-Integration:
 
-ZeroCI is continous intergration dedicated for python projects that generates junit test summary into xml file.
+ZeroCI is continuous integration dedicated for python projects that generates junit test summary into xml file.
 
 ### Server life cycle:
 
@@ -11,29 +11,29 @@ ZeroCI is continous intergration dedicated for python projects that generates ju
     - Create a job on rq and store it in redis.
     - There are 5 workers waiting for jobs, one of them will take this job and start to execute it.
     - Create a vm using flist on freefarm.
-    - Get installaltion and tests commands from zeroCI.yaml file for this commit.
+    - Get installation and tests commands from zeroCI.yaml file for this commit.
     - Run installation commands against this vm.
     - Store the result in DB (mongodb) in failure case.
-    - Run tests commands one by one aganist this vm.
+    - Run tests commands one by one against this vm.
     - Store the result in DB (mongodb).
     - Send result url to Telegram and update commit status om github.
 
 ##### 2- Run nightly testsuites:
 
-    - Make post request with install commands, tests commands, timeout, executeion time.
+    - Make post request with install commands, tests commands, timeout, execution time.
     - Store this job in rq scheduler.
     - rq scheduler will run this job on its execution time on rq workers.
     - Create a vm using flist on freefarm.
     - Get installation and tests commands from rq scheduler.
     - Run installation commands against this vm.
     - Store the result in DB (mongodb) in failure case.
-    - Run tests commands one by one aganist this vm.
+    - Run tests commands one by one against this vm.
     - Store the result in DB (mongodb).
     - Send result url to Telegram.
 
 ### Installation:
 
-#### Requirments:
+#### Requirements:
 
 - Create a vm with Ubuntu:18.04.
 - Install [JSX](https://github.com/threefoldtech/jumpscaleX_core/tree/development/docs/Installation)
@@ -55,7 +55,7 @@ result_path=                        # The result log file will stored in
 
 [telegram]
 chat_id=                            # Telegram chat ID
-token=                              # Telegran bot token
+token=                              # Telegram bot token
 
 [iyo]
 id=                                 # itsyouonline ID
@@ -77,7 +77,7 @@ port=                               # port that mongodb is running on
 
 #### How to run the server:
 
-Before run this script this repository should be in this path`/opt/code/github/AhmedHanafy725/zeroCI`
+Before running this script this repository should be in this path`/opt/code/github/AhmedHanafy725/zeroCI`
 ```bash
 ./run.sh
 ```
@@ -95,7 +95,7 @@ Go to the repository's setting needed to configure the webhook
 #### 2- zeroCI.yaml:
 
 - This file should be at the home of the repository with name `zeroCI.yaml`.
-- Should contain the project prequisties, installation and tests:
+- Should contain the project prerequisites, installation and tests:
     - `prequisties`: requirement needed to be installed before start installing the project.
     (**Note:** `jsx` and `docker` only supported)
     - `install`: list of bash command lines for how to install the project.
@@ -110,7 +110,7 @@ Go to the repository's setting needed to configure the webhook
 
 ### Getting the results:
 
-#### 1- The server frontend itself:
+#### 1- The server front-end itself:
 
 - Go to server ip that has been already added in `config.toml`
 - Once the repository has commit will be found.
@@ -132,7 +132,8 @@ Go to the repository's setting needed to configure the webhook
 
 #### 3- Telegram group chat:
 
-- In telegram group chat has been created in requirement step and added in `config.toml`, a message will be send to it once the test finshes.
+- In telegram group chat has been created in requirement step and added in `config.toml`, a message will be send to it once the test finishes.
+
   ![telegram done](/pictures/telegram_done.png)
 - `Result` button can be pressed for [result details](#result-details).
 
@@ -168,7 +169,6 @@ For more details about the plugin [Xunit](https://nose.readthedocs.io/en/latest/
 
 `-o junit_suite_name`: name of testsuite that will appear in the result.
 
-
 **Example:**
 ```bash
 pytest -v testcase.py --junitxml=/test.xml -o junit_suite_name=Simple_pytest
@@ -177,4 +177,4 @@ For more details about the plugin [junitxml](https://docs.pytest.org/en/latest/u
 
 ### Nightly tests:
 
-There is an api for adding them, but its pages not added yet.
+There is an API for adding nightly testsuite, but its pages not added yet.
