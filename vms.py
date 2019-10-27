@@ -136,20 +136,21 @@ class VMS(Utils):
         :param prequisties: list of prequisties needed.
         :type prequisties: list
         """
-        if {"docker", "jsx"}.issubset(set(prequisties)):
-            self.flist = "https://hub.grid.tf/qa_tft_1/jsx_docker.flist"
-            self.disk_path = "/var/cache/{}.qcow2".format(self.random_string())
-            self.node.client.bash("qemu-img create -f qcow2 {} 30G".format(self.disk_path)).get()
-            self.media.append({"url": self.disk_path})
+        if prequisties:
+            if {"docker", "jsx"}.issubset(set(prequisties)):
+                self.flist = "https://hub.grid.tf/qa_tft_1/jsx_docker.flist"
+                self.disk_path = "/var/cache/{}.qcow2".format(self.random_string())
+                self.node.client.bash("qemu-img create -f qcow2 {} 30G".format(self.disk_path)).get()
+                self.media.append({"url": self.disk_path})
 
-        elif "docker" in prequisties:
-            self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker.flist"
-            self.disk_path = "/var/cache/{}.qcow2".format(self.random_string())
-            self.node.client.bash("qemu-img create -f qcow2 {} 30G".format(self.disk_path)).get()
-            self.media.append({"url": self.disk_path})
+            elif "docker" in prequisties:
+                self.flist = "https://hub.grid.tf/qa_tft_1/ubuntu18.04_docker.flist"
+                self.disk_path = "/var/cache/{}.qcow2".format(self.random_string())
+                self.node.client.bash("qemu-img create -f qcow2 {} 30G".format(self.disk_path)).get()
+                self.media.append({"url": self.disk_path})
 
-        elif "jsx" in prequisties:
-            self.flist = "https://hub.grid.tf/qa_tft_1/jsx.flist"
+            elif "jsx" in prequisties:
+                self.flist = "https://hub.grid.tf/qa_tft_1/jsx.flist"
 
     def deploy_vm(self, prequisties=""):
         """Deploy a virtual machine on zos node.
@@ -249,9 +250,11 @@ class VMS(Utils):
             self.node.client.bash("rm -rf {}".format(self.disk_path)).get()
 
     def prepare_script(self):
-        return """apt-get update &&
-        export DEBIAN_FRONTEND=noninteractive &&
+        return """export DEBIAN_FRONTEND=noninteractive &&
+        apt-get update &&
         apt-get install -y git python3.6 python3-pip software-properties-common &&
         apt-get install -y --reinstall python3-apt &&
         pip3 install black &&
+        wget http://archive.ubuntu.com/ubuntu/pool/main/libs/libseccomp/libseccomp2_2.4.1-0ubuntu0.18.04.2_amd64.deb -O libseccomp.deb &&
+        dpkg -i libseccomp.deb &&
         """
