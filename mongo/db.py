@@ -1,6 +1,6 @@
 from mongoengine import fields, Document, connect
 
-from ..utils.config import Configs
+from utils.config import Configs
 
 
 class RepoRun(Document):

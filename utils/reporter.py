@@ -1,5 +1,5 @@
-from github.github import Github
-from telegram.telegram import Telegram
+from packages.github.github import Github
+from packages.telegram.telegram import Telegram
 from .config import Configs
 
 github = Github()

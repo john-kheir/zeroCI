@@ -4,3 +4,4 @@ mongoengine
 xmltodict
 paramiko
 redis
+uwsgi

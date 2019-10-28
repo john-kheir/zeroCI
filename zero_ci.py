@@ -9,11 +9,11 @@ from flask_cors import CORS
 from rq_scheduler import Scheduler
 from redis import Redis
 
-from .utils.config import Configs
-from .github.github import Github
-from .rq.worker import conn
-from .actions import Actions
-from .mongo.db import *
+from utils.config import Configs
+from packages.github.github import Github
+from packages.rq.worker import conn
+from actions import Actions
+from mongo.db import *
 
 
 configs = Configs()

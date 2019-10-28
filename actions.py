@@ -3,7 +3,7 @@ from datetime import datetime
 
 from utils.config import Configs
 from utils.reporter import Reporter
-from github.github import Github
+from packages.github.github import Github
 from mongo.db import *
 from vm.vms import VMS
 
