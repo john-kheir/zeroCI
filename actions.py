@@ -1,13 +1,18 @@
-from utils import Utils
-from db import *
 import os
-from vms import VMS
 from datetime import datetime
 
+from utils.config import Configs
+from utils.reporter import Reporter
+from github.github import Github
+from mongo.db import *
+from vm.vms import VMS
+
+DB()
 vms = VMS()
+github = Github()
+reporter = Reporter()
 
-
-class Actions(Utils):
+class Actions(Configs):
     def test_run(self, node_ip, port, id, test_script, db_run, timeout):
         """Runs tests with specific commit and store the result in DB.
         
@@ -76,7 +81,8 @@ class Actions(Utils):
             {"type": "log", "status": status, "name": "Black Formatting", "content": response.stderr}
         )
         repo_run.save()
-        self.github_status_send(
+
+        github.status_send(
             status=status, link=link, repo=repo_run.repo, commit=repo_run.commit, context="Black-Formatting"
         )
 
@@ -161,12 +167,5 @@ class Actions(Utils):
                 project_run = ProjectRun.objects.get(id=id)
 
             vms.destroy_vm(uuid)
-
         link = f"{self.domain}/projects/{project_run.name.replace(' ', '%20')}/{str(project_run.id)}"
-        # link = f"{self.domain}/get_status?id={str(project_run.id)}&n=1"
-        if project_run.status == "success":
-            self.send_msg("✅ {} tests passed".format(project_name), link)
-        elif project_run.status == "failure":
-            self.send_msg("❌ {} tests failed".format(project_name), link)
-        else:
-            self.send_msg("⛔️ {} tests errored".format(project_name), link)
+        reporter.report(id=id, db_run=RepoRun, project_name=project_name, link=link)

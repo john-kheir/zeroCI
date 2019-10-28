@@ -1,20 +1,25 @@
-from flask import Flask, request, send_file, render_template, abort, redirect, Response
-from utils import Utils
 from datetime import datetime
-from db import *
 import os
 import json
-import atexit
+
+from flask import Flask, request, send_file, render_template, abort, Response, redirect
 from rq import Queue
 from rq.job import Job
-from worker import conn
-from actions import Actions
 from flask_cors import CORS
 from rq_scheduler import Scheduler
 from redis import Redis
 
-utils = Utils()
+from .utils.config import Configs
+from .github.github import Github
+from .rq.worker import conn
+from .actions import Actions
+from .mongo.db import *
+
+
+configs = Configs()
 actions = Actions()
+github = Github()
+DB()
 
 app = Flask(__name__, static_folder="./dist/static", template_folder="./dist")
 
@@ -45,7 +50,7 @@ def trigger(**kwargs):
             commit = request.json["after"]
             committer = request.json["pusher"]["name"]
             deleted = request.json["deleted"]
-            if repo in utils.repo and deleted == False:
+            if repo in configs.repos and deleted == False:
                 status = "pending"
                 repo_run = RepoRun(
                     timestamp=datetime.now().timestamp(),
@@ -57,7 +62,7 @@ def trigger(**kwargs):
                 )
                 repo_run.save()
                 id = str(repo_run.id)
-                utils.github_status_send(status=status, link=utils.domain, repo=repo, commit=commit)
+                github.github_status_send(status=status, link=configs.domain, repo=repo, commit=commit)
 
                 job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=20000)
                 return Response(job.get_id(), 200)
@@ -75,7 +80,7 @@ def add_project():
         run_time = request.json.get("run_time")
         authentication = request.json.get("authentication")
         timeout = request.json.get("timeout", 3600)
-        if authentication == utils.github_token:
+        if authentication == configs.github_token:
             if not (
                 isinstance(project_name, str)
                 and isinstance(install_script, (str, list))
@@ -113,7 +118,7 @@ def remove_project():
     if request.headers.get("Content-Type") == "application/json":
         project_name = request.json.get("project_name")
         authentication = request.json.get("authentication")
-        if authentication == utils.github_token:
+        if authentication == configs.github_token:
             scheduler.cancel(project_name)
         return "Removed", 200
 
@@ -201,12 +206,12 @@ def status():
             ProjectRun.objects(name=project, status__ne="pending").only(*fields).order_by("-timestamp").first()
         )
         if result:
-            link = f"{utils.domain}/projects/{project}?id={str(project_run.id)}"
+            link = f"{configs.domain}/projects/{project}?id={str(project_run.id)}"
             return redirect(link)
         if project_run.status == "success":
-            return send_file("{}_passing.svg".format(project), mimetype="image/svg+xml")
+            return send_file("svgs/build_passing.svg", mimetype="image/svg+xml")
         else:
-            return send_file("{}_failing.svg".format(project), mimetype="image/svg+xml")
+            return send_file("svgs/build_failing.svg", mimetype="image/svg+xml")
 
     elif repo:
         if not branch:
@@ -215,12 +220,12 @@ def status():
             RepoRun.objects(repo=repo, branch=branch, status__ne="pending").only(*fields).order_by("-timestamp").first()
         )
         if result:
-            link = f"{utils.domain}/repos/{repo.replace('/', '%2F')}/{branch}/{str(repo_run.id)}"
+            link = f"{configs.domain}/repos/{repo.replace('/', '%2F')}/{branch}/{str(repo_run.id)}"
             return redirect(link)
         if repo_run.status == "success":
-            return send_file("build_passing.svg", mimetype="image/svg+xml")
+            return send_file("svgs/build_passing.svg", mimetype="image/svg+xml")
         else:
-            return send_file("build_failing.svg", mimetype="image/svg+xml")
+            return send_file("svgs/build_failing.svg", mimetype="image/svg+xml")
 
     return abort(404)
 

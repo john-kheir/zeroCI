@@ -9,7 +9,7 @@ Environment=LANG=en_US.UTF-8
 Environment=LC_ALL=en_US.UTF-8
 Environment=LC_LANG=en_US.UTF-8
 Environment=PYTHONPATH=/sandbox/lib/jumpscale
-ExecStart=/usr/bin/python3 worker.py &
+ExecStart=/usr/bin/python3 rq/worker.py &
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s TERM $MAINPID
 PrivateTmp=true

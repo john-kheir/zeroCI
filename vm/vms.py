@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 import random
 import os
 import time
-from db import *
 import paramiko
 
 

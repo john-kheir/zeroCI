@@ -41,7 +41,7 @@ ZeroCI is continuous integration dedicated for python projects that generates ju
 - Create Telegram bot and add it to this group chat.
 - Install mongodb `apt-get install -y mongodb`
 - Install redis `apt-get install -y redis`
-- Install packages required `pip3 install -r requirement.txt`
+- Install packages required `pip3 install -r install/requirement.txt`
 
 
 #### Configuration:
@@ -79,7 +79,7 @@ port=                               # port that mongodb is running on
 
 Before running this script this repository should be in this path`/opt/code/github/AhmedHanafy725/zeroCI`.
 ```bash
-./run.sh
+bash install/run.sh
 ```
 
 ### Github repository configuration:

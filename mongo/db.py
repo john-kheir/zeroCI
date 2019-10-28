@@ -1,5 +1,6 @@
-import mongoengine
-from mongoengine import fields, Document
+from mongoengine import fields, Document, connect
+
+from ..utils.config import Configs
 
 
 class RepoRun(Document):
@@ -11,7 +12,7 @@ class RepoRun(Document):
     committer = fields.StringField()
     result = fields.ListField(default=[])
 
-    meta = {"collection": "repo", "indexes": ["timestamp"]}
+    meta = {"collection": "repo"}
 
 
 class ProjectRun(Document):
@@ -20,4 +21,13 @@ class ProjectRun(Document):
     name = fields.StringField()
     result = fields.ListField(default=[])
 
-    meta = {"collection": "project", "indexes": ["timestamp"]}
+    meta = {"collection": "project"}
+
+
+class DB(Configs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.db_connect()
+
+    def db_connect(self):
+        connect(db=self.db_name, host=self.db_host, port=self.db_port)
