@@ -32,9 +32,9 @@ def set_response_headers(response):
     return response
 
 
-@app.route("/triggar", methods=["POST"])
-def triggar(**kwargs):
-    """Triggar the test when a post request is sent from a repo's webhook.
+@app.route("/trigger", methods=["POST"])
+def trigger(**kwargs):
+    """Trigger the test when a post request is sent from a repo's webhook.
     """
     if request.headers.get("Content-Type") == "application/json":
         # push case

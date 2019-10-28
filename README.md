@@ -1,6 +1,6 @@
 ## Zero Continuous-Integration:
 
-ZeroCI is continuous integration dedicated for python projects that generates junit test summary into xml file.
+ZeroCI is continuous integration dedicated for python projects that generates junit test summary into xml file and it is inegrated with Github and Telegram.
 
 ### Server life cycle:
 
@@ -16,7 +16,7 @@ ZeroCI is continuous integration dedicated for python projects that generates ju
     - Store the result in DB (mongodb) in failure case.
     - Run tests commands one by one against this vm.
     - Store the result in DB (mongodb).
-    - Send result url to Telegram and update commit status om github.
+    - Send result url to Telegram and update commit status on github.
 
 ##### 2- Run nightly testsuites:
 
@@ -77,7 +77,7 @@ port=                               # port that mongodb is running on
 
 #### How to run the server:
 
-Before running this script this repository should be in this path`/opt/code/github/AhmedHanafy725/zeroCI`
+Before running this script this repository should be in this path`/opt/code/github/AhmedHanafy725/zeroCI`.
 ```bash
 ./run.sh
 ```
@@ -86,18 +86,19 @@ Before running this script this repository should be in this path`/opt/code/gith
 
 #### 1- Webhook:
 
-Go to the repository's setting needed to configure the webhook
-- Add the ip of the server ended with `/triggar`
-- Content type should be `application/json`
-- Select when the webhook will trigger the server (**Note:** Just the push event is supported for now)
+Go to the repository's setting to configure the webhook
+- Add the ip of the server ended with `/trigger`.
+- Content type should be `application/json`.
+- Select when the webhook will trigger the server. (**Note:** `Just the push event` is only supported for now)
 ![webhook](pictures/webhook.png)
 
 #### 2- zeroCI.yaml:
 
 - This file should be at the home of the repository with name `zeroCI.yaml`.
-- Should contain the project prerequisites, installation and tests:
+  ![zeroci location](/pictures/repo_home.png)
+- Should contain the project prerequisites, installation and test scripts:
     - `prequisties`: requirement needed to be installed before start installing the project.
-    (**Note:** `jsx` and `docker` only supported)
+      (**Note:** `jsx` and `docker` only supported)
     - `install`: list of bash command lines for how to install the project.
     - `script`: list of bash command lines for how to run the tests ([more details](#zeroci-script-configuration)).
 
@@ -113,12 +114,12 @@ Go to the repository's setting needed to configure the webhook
 #### 1- The server front-end itself:
 
 - Go to server ip that has been already added in `config.toml`
-- Once the repository has commit will be found.
+- Once the repository has commit, it will be found.
   ![server pending](/pictures/server_pending.png)
 - When the test finishes, the status will be updated.
   ![server done](/pictures/server_done.png)
 - result id can be pressed for [result details](#result-details).
-(**Note:** if the branch used is `development`, will find a card with the status in server dashboard)
+(**Note:** if the branch used is `development`, will find a card with the latest status in server dashboard)
 ![dashboard](/pictures/dashboard.png)
 
 
@@ -126,13 +127,13 @@ Go to the repository's setting needed to configure the webhook
 
 - Once the repository has commit go to repository commits.
   ![github pending](/pictures/github_pending.png)
-- When the test finishes, the status should be updated.
+- When the test finishes, the status will be updated.
   ![github done](/pictures/github_done.png)
 - `details` can be pressed for [result details](#result-details).
 
 #### 3- Telegram group chat:
 
-- In telegram group chat has been created in requirement step and added in `config.toml`, a message will be send to it once the test finishes.
+- In telegram group chat has been created in requirement step and added in `config.toml`, a message will be sent to it once the test finishes.
 
   ![telegram done](/pictures/telegram_done.png)
 - `Result` button can be pressed for [result details](#result-details).
@@ -145,7 +146,7 @@ Go to the repository's setting needed to configure the webhook
 
 - For more details about every test, test name can be pressed.
   ![more details](/pictures/more_details.png)
-  (**Note:** if the test running does not generate junit test summary xml file, the result will appear in log format as running in shell.)
+  (**Note:** if the test running does not generate junit test summary into xml file, the result will appear in log format as running in shell.)
 
 ### zeroci script configuration:
 
@@ -153,7 +154,7 @@ This part is important for getting result in this [view](#result-details)
 
 #### Nosetests:
 
-`--with-xunit`: to enable the plugin to generate junit test summary xml file.
+`--with-xunit`: to enable the plugin to generate junit test summary into xml file.
 `--xunit-file`: specify the output file name, in this case MUST be `/test.xml`.  
 `--xunit-testsuite-name`: name of testsuite that will appear in the result.
 
@@ -166,7 +167,6 @@ For more details about the plugin [Xunit](https://nose.readthedocs.io/en/latest/
 #### Pytest:
 
 `--junitxml`: to enable the plugin and specify the output file name, in this case MUST be `/test.xml`.
-
 `-o junit_suite_name`: name of testsuite that will appear in the result.
 
 **Example:**
@@ -177,4 +177,4 @@ For more details about the plugin [junitxml](https://docs.pytest.org/en/latest/u
 
 ### Nightly tests:
 
-There is an API for adding nightly testsuite, but its pages not added yet.
+There is an API for adding nightly testsuite, but its page not added yet.
