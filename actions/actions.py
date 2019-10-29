@@ -138,7 +138,7 @@ class Actions(Configs):
         :param id: DB id of this commit details.
         :type id: str
         """
-        prequisties, install_script, test_script = self.install_test_scripts(id=id)
+        prequisties, install_script, test_script = github.install_test_scripts(id=id)
         uuid, response, node_ip, port = self.build(
             install_script=install_script, id=id, db_run=RepoRun, prequisties=prequisties
         )
@@ -148,7 +148,7 @@ class Actions(Configs):
                 self.test_run(node_ip=node_ip, port=port, id=id, test_script=test_script, db_run=RepoRun, timeout=3600)
                 self.cal_status(id=id, db_run=RepoRun)
             vms.destroy_vm(uuid)
-        self.report(id=id)
+        reporter.report(id=id, db_run=RepoRun)
 
     def run_project(self, project_name, install_script, test_script, prequisties, timeout):
         status = "pending"
@@ -168,4 +168,4 @@ class Actions(Configs):
 
             vms.destroy_vm(uuid)
         link = f"{self.domain}/projects/{project_run.name.replace(' ', '%20')}/{str(project_run.id)}"
-        reporter.report(id=id, db_run=RepoRun, project_name=project_name, link=link)
+        reporter.report(id=id, db_run=ProjectRun, project_name=project_name, link=link)

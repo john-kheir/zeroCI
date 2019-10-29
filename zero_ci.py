@@ -12,7 +12,7 @@ from redis import Redis
 from utils.config import Configs
 from packages.github.github import Github
 from packages.rq.worker import conn
-from actions import Actions
+from actions.actions import Actions
 from mongo.db import *
 
 
@@ -62,7 +62,7 @@ def trigger(**kwargs):
                 )
                 repo_run.save()
                 id = str(repo_run.id)
-                github.github_status_send(status=status, link=configs.domain, repo=repo, commit=commit)
+                github.status_send(status=status, link=configs.domain, repo=repo, commit=commit)
 
                 job = q.enqueue_call(func=actions.build_and_test, args=(id,), result_ttl=5000, timeout=20000)
                 return Response(job.get_id(), 200)

@@ -11,8 +11,8 @@ RETRIES = 5
 
 
 class Github(Configs):
-    def __ini__(self, **kwargs):
-        super.__init__(self, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.github_cl = GH(self.github_token)
 
     def status_send(
@@ -29,11 +29,11 @@ class Github(Configs):
         :param commit: commit hash required to change its status on github.
         :type commit: str
         """
-        for _ in range(0, RETRIES):
+        for _ in range(RETRIES):
             try:
-                repo = self.github_cl.get_repo(repo)
-                commit = repo.get_commit(commit)
-                commit.create_status(state=status, target_url=link, description=description, context=context)
+                repo_obj = self.github_cl.get_repo(repo)
+                commit_obj = repo_obj.get_commit(commit)
+                commit_obj.create_status(state=status, target_url=link, description=description, context=context)
                 break
             except Exception:
                 time.sleep(1)
@@ -48,7 +48,7 @@ class Github(Configs):
         :param file_path: file path in the repo
         :type file_path: str
         """
-        for _ in range(0, RETRIES):
+        for _ in range(RETRIES):
             try:
                 repo = self.github_cl.get_repo(repo)
                 content_b64 = repo.get_contents(file_path, ref=ref)
@@ -81,7 +81,7 @@ class Github(Configs):
             "\n", " "
         )
 
-        script = self.github_get_content(repo=repo_run.repo, ref=repo_run.commit, file_path="zeroCI.yaml")
+        script = self.get_content(repo=repo_run.repo, ref=repo_run.commit, file_path="zeroCI.yaml")
         if script:
             yaml_script = yaml.load(script)
             prequisties = yaml_script.get("prequisties")

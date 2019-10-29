@@ -37,7 +37,7 @@ class Telegram(Configs):
         reply_markup = InlineKeyboardMarkup([button_list])
 
         # msg = "\n".join([msg, repo, branch, committer, commit])
-        for _ in range(0, 5):
+        for _ in range(RETRIES):
             try:
                 self.telegram_cl.send_message(
                     chat_id=self.chat_id,

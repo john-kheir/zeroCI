@@ -1,4 +1,4 @@
-from utils import Utils
+from utils.utils import Utils
 from Jumpscale import j
 from urllib.parse import urlparse
 import random
