@@ -14,6 +14,7 @@ github = Github()
 reporter = Reporter()
 utils = Utils()
 
+
 class Actions(Configs):
     def test_run(self, node_ip, port, id, test_script, db_run, timeout):
         """Runs tests with specific commit and store the result in DB.
