@@ -3,6 +3,7 @@ from datetime import datetime
 
 from utils.config import Configs
 from utils.reporter import Reporter
+from utils.utils import Utils
 from packages.github.github import Github
 from mongo.db import *
 from vm.vms import VMS
@@ -11,6 +12,7 @@ DB()
 vms = VMS()
 github = Github()
 reporter = Reporter()
+utils = Utils()
 
 class Actions(Configs):
     def test_run(self, node_ip, port, id, test_script, db_run, timeout):
@@ -33,7 +35,7 @@ class Actions(Configs):
                     if response.returncode:
                         status = "failure"
                     try:
-                        result = self.xml_parse(path=file_path, line=line)
+                        result = utils.xml_parse(path=file_path, line=line)
                         repo_run.result.append(
                             {
                                 "type": "testsuite",

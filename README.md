@@ -63,7 +63,7 @@ secret=                             # itsyouonline secret
 
 [github]
 access_token=                       # Github access token for user
-repo=                               # list of  repositories Full name that will run on your zeroCI
+repos=                               # list of  repositories Full name that will run on your zeroCI
 
 [db]
 name=                               # db name will be used to store the result in

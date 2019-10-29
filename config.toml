@@ -12,7 +12,7 @@ secret=""
 
 [github]
 token=""
-repo=[]
+repos=[]
 
 [db]
 name=""

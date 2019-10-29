@@ -9,8 +9,8 @@ RETRIES = 5
 
 
 class Telegram(Configs):
-    def __ini__(self, **kwargs):
-        super.__init__(self, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.telegram_cl = Bot(self.bot_token)
 
     def send_msg(self, msg, link, repo=None, branch=None, commit=None, committer=None):

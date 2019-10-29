@@ -5,3 +5,5 @@ xmltodict
 paramiko
 redis
 uwsgi
+flask_cors
+python-telegram-bot

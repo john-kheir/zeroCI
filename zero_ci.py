@@ -11,7 +11,7 @@ from redis import Redis
 
 from utils.config import Configs
 from packages.github.github import Github
-from packages.rq.worker import conn
+from worker import conn
 from actions.actions import Actions
 from mongo.db import *
 
