@@ -41,7 +41,7 @@ ZeroCI is continuous integration dedicated for python projects that generates ju
 - Create Telegram bot and add it to this group chat.
 - Install redis and mongodb `apt-get install -y redis mongodb`
 - Clone the repository and install packages required.
-    ```
+    ```bash
     mkdir -p /opt/code/github/AhmedHanafy725
     cd /opt/code/github/AhmedHanafy725
     git clone https://github.com/AhmedHanafy725/zeroCI.git --branch cleanup
