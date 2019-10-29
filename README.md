@@ -39,10 +39,15 @@ ZeroCI is continuous integration dedicated for python projects that generates ju
 - Install [JSX](https://github.com/threefoldtech/jumpscaleX_core/tree/development/docs/Installation)
 - Create a Telegram group chat.
 - Create Telegram bot and add it to this group chat.
-- Install mongodb `apt-get install -y mongodb`
-- Install redis `apt-get install -y redis`
-- Install packages required `pip3 install -r install/requirement.txt`
-
+- Install redis and mongodb `apt-get install -y redis mongodb`
+- Clone the repository and install packages required.
+    ```
+    mkdir -p /opt/code/github/AhmedHanafy725
+    cd /opt/code/github/AhmedHanafy725
+    git clone https://github.com/AhmedHanafy725/zeroCI.git --branch cleanup
+    cd zeroCI
+    pip3 install -r install/requirement.txt
+    ```
 
 #### Configuration:
 
@@ -73,11 +78,8 @@ port=                               # port that mongodb is running on
 [environment]                       # under this a list of environment variables needed to be exported before running tests.
 ```
 
-- Add server IP as webhook in Repository's settings.
-
 #### How to run the server:
 
-Before running this script this repository should be in this path`/opt/code/github/AhmedHanafy725/zeroCI`.
 ```bash
 bash install/run.sh
 ```
