@@ -1,137 +1,118 @@
-## Zero Continuous-Integration:
+# Zero Continuous Integration
 
-ZeroCI is continuous integration dedicated for python projects that generates test summary into xml file and it is inetgrated with Github and Telegram.
+ZeroCI is continuous integration dedicated for python projects that generates test summary into xml file and it is integrated with Github and Telegram.
 
-### Server life cycle:
+### ZeroCI life cycle
 
-#### There are two scenarios:
+This [section](/docs/life_cycle.md) is added to talk more about the ZeroCI life cycle and explain how things work internally.
 
-##### 1- Pushing in repo already defined in config file, the following steps will be done:
+### ZeroCI Installation
 
-- Create a job and store it in redis.
-- There are 5 workers waiting for jobs, one of them will take this job and start to execute it.
-- Create a vm using flist on freefarm.
-- Get installation and tests commands from zeroCI.yaml file for this commit.
-- Run installation commands against this vm.
-- Store the result in DB in failure case.
-- Run tests commands one by one against this vm.
-- Store the result in DB.
-- Send result url to Telegram and update commit status on github.
+For installation and running ZeroCI, please check it [here](/docs/installation.md)
 
-##### 2- Run nightly testsuites:
+### Github Repository Under Test (RUT) configuration
 
-- Make post request with install commands, tests commands, timeout, execution time.
-- Store this job in scheduler.
-- scheduler will run this job on its execution time on workers.
-- Create a vm using flist on freefarm.
-- Get installation and tests commands from scheduler.
-- Run installation commands against this vm.
-- Store the result in DB in failure case.
-- Run tests commands one by one against this vm.
-- Store the result in DB.
-- Send result url to Telegram.
+There are 3 main steps to hook the RUT and make it run against ZeroCI:
 
-### Installation:
+#### 1- Configure RUT Webhook
 
-For [installation and running](/install/README.md)
+Go to the repository's setting to configure the webhook:
 
-### Github repository configuration:
-
-#### 1- Webhook:
-
-Go to the repository's setting to configure the webhook
-- Add the ip of the server ended with `/trigger`.
+- Add payload URL with providing the server ip and make sure it ends with `/trigger`.
 - Content type should be `application/json`.
-- Select when the webhook will trigger the server. (**Note:** `Just the push event` is only supported for now)
-![webhook](pictures/webhook.png)
+- Select when the webhook will trigger the server. (**Note:** `Just the push event` is the only supported option for now)
+![webhook](/docs/Images/webhook.png)
 
-#### 2- zeroCI.yaml:
+#### 2- Add zeroCI.yaml file to the RUT
 
-- This file should be at the home of the repository with name `zeroCI.yaml`.
-  ![zeroci location](/pictures/repo_home.png)
-- Should contain the project prerequisites, installation and test scripts:
-    - `prequisties`: requirement needed to be installed before start installing the project.
-      (**Note:** `jsx` and `docker` only supported)
-    - `install`: list of bash command lines for how to install the project.
-    - `script`: list of bash command lines for how to run the tests ([more details](#zeroci-script-configuration)).
+- Add a file called `zeroCI.yaml` to the home of your repository.
+  ![zeroci location](/docs/Images/repo_home.png)
+- This file contains the project's prerequisites, installation and test scripts:
+  - `prequisties`: requirements needed to be installed before starting project installation.
+    (**Note:** `jsx` and `docker` only supported)
+  - `install`: list of bash commands required to install the project.
+  - `script`: list of bash commands needed to run the tests ([more details](#zeroci-script-configuration)).
 
-![zeroci](/pictures/zeroci.png)
+![zeroci](/docs/Images/zeroci.png)
 
-#### 3- Server configuration:
+#### 3- Update ZeroCI [config.toml](config.toml)
 
-- Full name of the repository should be added in `config.toml`.
-- Restart the server `systemctl restart zeroci`
+- Full name of the repository should be added to [config.toml](config.toml).
+- Restart the server: `systemctl restart zero_ci`
 
-### Getting the results:
+### Getting the results
 
-#### 1- The server front-end itself:
+#### 1- ZeroCI Dashboard
 
 - Go to server ip that has been already added in `config.toml`
-- Once the repository has commit, it will be found.
-  ![server pending](/pictures/server_pending.png)
+- Once a commit has been pushed, it will be found with a pending status.
+  ![server pending](/docs/Images/server_pending.png)
 - When the test finishes, the status will be updated.
-  ![server done](/pictures/server_done.png)
-- result id can be pressed for [result details](#result-details).
-(**Note:** if the branch used is `development`, will find a card with the latest status in server dashboard)
-![dashboard](/pictures/dashboard.png)
-
+- Press the result ID to view the [result details](#result-details).
+  ![server done](/docs/Images/server_done.png)
+- Please browse to ZeroCI dashboard to view repos cards in which each card contains  info about current repo, last build status, etc. (**Note:** The only current used branch is `development`)
+  ![dashboard](/docs/Images/dashboard.png)
 
 #### 2- Github status
 
-- Once the repository has commit go to repository commits.
-  ![github pending](/pictures/github_pending.png)
-- When the test finishes, the status will be updated.
-  ![github done](/pictures/github_done.png)
-- `details` can be pressed for [result details](#result-details).
+- Once a commit has been pushed to RUT, if you go to the repository commits, you will find a yellow message indicating that some checks haven't been compeleted yet.
+  ![github pending](/docs/Images/github_pending.png)
+- When the tests run finishes, the status will be updated.
+  ![github done](/docs/Images/github_done.png)
+- Please press 'Details' link to view [result details](#result-details).
 
-#### 3- Telegram group chat:
+#### 3- Telegram group chat
 
-- In telegram group chat has been created in requirement step and added in `config.toml`, a message will be sent to it once the test finishes.
+- If you want to get a message with the build status on telegram chat, please provide the telegram required info in  `config.toml`.
 
-  ![telegram done](/pictures/telegram_done.png)
-- `Result` button can be pressed for [result details](#result-details).
+  ![telegram done](/docs/Images/telegram_done.png)
+- Please press the `Result` button for viewing [result details](#result-details).
 
-#### Result details:
+#### Result details
 
-- Black formatting will appear at the beginning.
-- Then the rest of tests added in [zeroci](#2--zerociyaml) in `script` field.
-  ![result details](/pictures/result_details.png)
+- Black formatting result will appear at the beginning.
+- Then you can see the run results related to the tests added under `script` field in [ZeroCI.yaml](#2--zerociyaml).
+  ![result details](/docs/Images/result_details.png)
 
-- For more details about every test, test name can be pressed.
-  ![more details](/pictures/more_details.png)
-  (**Note:** if the test running does not generate junit test summary into xml file, the result will appear in log format as running in shell.)
+- For more details about every test, please press on the test name.
+  ![more details](/docs/Images/more_details.png)
+  (**Note:** if the test run didn't generate junit test summary into xml file, the result will appear in log format as running in shell.)
 
-### zeroci script configuration:
+### zeroci script configuration
 
 This part is important for getting result in this [view](#result-details)
 
-#### Nosetests:
+#### Nosetests
 
 `--with-xunit`: to enable the plugin to generate junit test summary into xml file.
 `--xunit-file`: specify the output file name, in this case MUST be `/test.xml`.  
 `--xunit-testsuite-name`: name of testsuite that will appear in the result.
 
-**Example:**
+##### Example:
+
 ```bash
 nosetests-3.4 -v testcase.py --with-xunit --xunit-file=/test.xml --xunit-testsuite-name=Simple_nosetest
 ```
+
 For more details about the plugin [Xunit](https://nose.readthedocs.io/en/latest/plugins/xunit.html)
 
-#### Pytest:
+#### Pytest
 
 `--junitxml`: to enable the plugin and specify the output file name, in this case MUST be `/test.xml`.
 `-o junit_suite_name`: name of testsuite that will appear in the result.
 
-**Example:**
+##### Example:
+
 ```bash
 pytest -v testcase.py --junitxml=/test.xml -o junit_suite_name=Simple_pytest
 ```
+
 For more details about the plugin [junitxml](https://docs.pytest.org/en/latest/usage.html#creating-junitxml-format-files)
 
-### Nightly tests:
+### Nightly tests
 
-There is an API for adding nightly testsuite, but its page not added yet.
-
+There is an API for adding nightly testsuite, but its page hasn't been added yet.
 
 ### Roadmap
+
 Using more of jsx tools as soon as there is a stable release.
