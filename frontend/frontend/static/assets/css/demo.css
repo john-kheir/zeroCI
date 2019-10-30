@@ -1,0 +1,71 @@
+/* All styles created for demo purposes only, you may not need this for your project */
+
+.main .panel-headline,
+#wrapper .main {
+    box-shadow: none;
+}
+
+.demo-button button {
+    margin-bottom: 5px;
+}
+
+.demo-icons li {
+    margin-bottom: 50px;
+    text-align: center;
+}
+
+.demo-icons .lnr,
+.demo-icons .fa {
+    font-size: 28px;
+}
+
+.demo-icons .cssclass {
+    display: block;
+    margin-top: 5px;
+    margin-left: 5px;
+}
+
+.wrapper {
+    overflow: hidden;
+    border: 1px solid #DCE6EB;
+    padding: 0 5px;
+    margin-bottom: 30px;
+    max-height: 130px;
+    color: #4d4d4d;
+    background-color: #fff;
+    border-radius: 5px;
+}
+
+.state {
+    min-height: 20vh;
+}
+
+.wrapper h2 {
+    text-transform: capitalize;
+}
+
+.wrapper small {
+    float: right;
+}
+
+.label-danger {
+    background-color: #B90000;
+}
+
+.label-success {
+    background-color: #10B000;
+}
+
+.label-warning {
+    background-color: #EA8E02;
+}
+
+@media(max-width:767px) {
+    .state {
+        min-height: 5px;
+        width: 100%;
+    }
+}
+
+
+/*# sourceMappingURL=demo.css.map */

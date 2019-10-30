@@ -1,8 +1,0 @@
-FROM ahmedhanafy725/jumpscalex
-
-ARG branch
-ARG commit
-RUN cd /sandbox/code/github/threefoldtech/jumpscaleX; git pull
-RUN cd /sandbox/code/github/threefoldtech; rm -rf digitalmeX; git clone --branch $branch https://github.com/threefoldtech/digitalmeX.git
-RUN cd /sandbox/code/github/threefoldtech/digitalmeX; git reset --hard $commit
-COPY ./cred.json /sandbox/code/github/threefoldtech/digitalmeX/packages/gdrive/tests
