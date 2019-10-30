@@ -21,19 +21,19 @@ Go to the repository's setting to configure the webhook:
 - Add payload URL with providing the server ip and make sure it ends with `/trigger`.
 - Content type should be `application/json`.
 - Select when the webhook will trigger the server. (**Note:** `Just the push event` is the only supported option for now)
-![webhook](pictures/webhook.png)
+![webhook](/docs/Images/webhook.png)
 
 #### 2- Add zeroCI.yaml file to the RUT
 
 - Add a file called `zeroCI.yaml` to the home of your repository.
-  ![zeroci location](/pictures/repo_home.png)
+  ![zeroci location](/docs/Images/repo_home.png)
 - This file contains the project's prerequisites, installation and test scripts:
   - `prequisties`: requirements needed to be installed before starting project installation.
     (**Note:** `jsx` and `docker` only supported)
   - `install`: list of bash commands required to install the project.
   - `script`: list of bash commands needed to run the tests ([more details](#zeroci-script-configuration)).
 
-![zeroci](/pictures/zeroci.png)
+![zeroci](/docs/Images/zeroci.png)
 
 #### 3- Update ZeroCI [config.toml](config.toml)
 
@@ -46,36 +46,36 @@ Go to the repository's setting to configure the webhook:
 
 - Go to server ip that has been already added in `config.toml`
 - Once a commit has been pushed, it will be found with a pending status.
-  ![server pending](/pictures/server_pending.png)
+  ![server pending](/docs/Images/server_pending.png)
 - When the test finishes, the status will be updated.
 - Press the result ID to view the [result details](#result-details).
-  ![server done](/pictures/server_done.png)
+  ![server done](/docs/Images/server_done.png)
 - Please browse to ZeroCI dashboard to view repos cards in which each card contains  info about current repo, last build status, etc. (**Note:** The only current used branch is `development`)
-  ![dashboard](/pictures/dashboard.png)
+  ![dashboard](/docs/Images/dashboard.png)
 
 #### 2- Github status
 
 - Once a commit has been pushed to RUT, if you go to the repository commits, you will find a yellow message indicating that some checks haven't been compeleted yet.
-  ![github pending](/pictures/github_pending.png)
+  ![github pending](/docs/Images/github_pending.png)
 - When the tests run finishes, the status will be updated.
-  ![github done](/pictures/github_done.png)
+  ![github done](/docs/Images/github_done.png)
 - Please press 'Details' link to view [result details](#result-details).
 
 #### 3- Telegram group chat
 
 - If you want to get a message with the build status on telegram chat, please provide the telegram required info in  `config.toml`.
 
-  ![telegram done](/pictures/telegram_done.png)
+  ![telegram done](/docs/Images/telegram_done.png)
 - Please press the `Result` button for viewing [result details](#result-details).
 
 #### Result details
 
 - Black formatting result will appear at the beginning.
 - Then you can see the run results related to the tests added under `script` field in [ZeroCI.yaml](#2--zerociyaml).
-  ![result details](/pictures/result_details.png)
+  ![result details](/docs/Images/result_details.png)
 
 - For more details about every test, please press on the test name.
-  ![more details](/pictures/more_details.png)
+  ![more details](/docs/Images/more_details.png)
   (**Note:** if the test run didn't generate junit test summary into xml file, the result will appear in log format as running in shell.)
 
 ### zeroci script configuration
