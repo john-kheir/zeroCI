@@ -2,38 +2,39 @@
 
 ZeroCI is continuous integration dedicated for python projects that generates test summary into xml file and it is integrated with Github and Telegram.
 
-### Server life cycle:
+### ZeroCI life cycle:
+This (section)[] is added to talk more about the ZeroCI life cycle and explain how things work internally.
 
-#### There are two scenarios:
+#### There are two scenarios in which a build will be triggered:
 
-##### 1- Pushing in repo already defined in [config file](config.toml), the following steps will be done:
+##### 1- Pushing in repo already defined in [config file](config.toml):
+ For such a scenario, the following steps will be done:
 
-- Create a job and store it in redis.
-- There are 5 workers waiting for jobs, one of them will take a job and start to execute it.
-- Create a vm using flist on freefarm.
-- Get installation and tests commands from zeroCI.yaml file for this commit.
-- Run installation commands against this vm.
-- Store the result in DB in failure case.
-- Run tests commands one by one against this vm.
-- Store the result in DB.
-- Send result url to Telegram and update commit status on github.
+- When a commit is pushed, Automatically a job is created and stored in redis.
+- A worker will take this job and start to execute it. (Note: There are 5 workers that can handle only up to 5 jobs max).
+- A vm will be created using flist on freefarm.
+- Run installation commands against this vm as defined in zeroCI.yaml.
+- Store the result in database in failure case.
+- Run tests commands one by one against this vm as defined in zeroCI.yaml.
+- Store the result in database.
+- Send result url to telegram and update commit status on github.
 
-##### 2- Run nightly testsuites:
+##### 2- Scheduled nightly builds:
+For such a scenario, the following steps will be done:
 
 - Make post request with install commands, tests commands, timeout, execution time.
 - Store this job in scheduler.
-- scheduler will run this job on its execution time on workers.
-- Create a vm using flist on freefarm.
-- Get installation and tests commands from scheduler.
-- Run installation commands against this vm.
-- Store the result in DB in failure case.
-- Run tests commands one by one against this vm.
-- Store the result in DB.
+- A worker will pick up this job at the specified execution time defined by the scheduler.
+- A vm will be created using flist on freefarm.
+- Run installation commands against this vm as defined in zeroCI.yaml.
+- Store the result in database in case of failure.
+- Run tests commands one by one against this vm as defined in zeroCI.yaml.
+- Store the result in database.
 - Send result url to Telegram.
 
-### Installation:
+### ZeroCI Installation:
 
-For [installation and running](/install/README.md)
+For installation and running ZeroCI, please check it [here](/install/README.md)
 
 ### Github Repository Under Test (RUT) configuration:
 
