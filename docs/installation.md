@@ -8,9 +8,9 @@
 - Install redis and mongodb `apt-get install -y redis mongodb`
 - Clone the repository and install packages required.
     ```bash
-    mkdir -p /opt/code/github/AhmedHanafy725
-    cd /opt/code/github/AhmedHanafy725
-    git clone https://github.com/AhmedHanafy725/zeroCI.git --branch cleanup
+    mkdir -p /sandbox/code/github/threefoldtech
+    cd /sandbox/code/github/threefoldtech
+    git clone https://github.com/threefoldtech/zeroCI.git
     cd zeroCI
     pip3 install -r install/requirement.txt
     ```
