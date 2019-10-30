@@ -1,6 +1,6 @@
 ## Zero Continuous-Integration:
 
-ZeroCI is continuous integration dedicated for python projects that generates junit test summary into xml file and it is inegrated with Github and Telegram.
+ZeroCI is continuous integration dedicated for python projects that generates test summary into xml file and it is inetgrated with Github and Telegram.
 
 ### Server life cycle:
 
@@ -8,81 +8,32 @@ ZeroCI is continuous integration dedicated for python projects that generates ju
 
 ##### 1- Pushing in repo already defined in config file, the following steps will be done:
 
-- Create a job on rq and store it in redis.
+- Create a job and store it in redis.
 - There are 5 workers waiting for jobs, one of them will take this job and start to execute it.
 - Create a vm using flist on freefarm.
 - Get installation and tests commands from zeroCI.yaml file for this commit.
 - Run installation commands against this vm.
-- Store the result in DB (mongodb) in failure case.
+- Store the result in DB in failure case.
 - Run tests commands one by one against this vm.
-- Store the result in DB (mongodb).
+- Store the result in DB.
 - Send result url to Telegram and update commit status on github.
 
 ##### 2- Run nightly testsuites:
 
 - Make post request with install commands, tests commands, timeout, execution time.
-- Store this job in rq scheduler.
-- rq scheduler will run this job on its execution time on rq workers.
+- Store this job in scheduler.
+- scheduler will run this job on its execution time on workers.
 - Create a vm using flist on freefarm.
-- Get installation and tests commands from rq scheduler.
+- Get installation and tests commands from scheduler.
 - Run installation commands against this vm.
-- Store the result in DB (mongodb) in failure case.
+- Store the result in DB in failure case.
 - Run tests commands one by one against this vm.
-- Store the result in DB (mongodb).
+- Store the result in DB.
 - Send result url to Telegram.
 
 ### Installation:
 
-#### Requirements:
-
-- Create a vm with Ubuntu:18.04.
-- Install [JSX](https://github.com/threefoldtech/jumpscaleX_core/tree/development/docs/Installation)
-- Create a Telegram group chat.
-- Create Telegram bot and add it to this group chat.
-- Install redis and mongodb `apt-get install -y redis mongodb`
-- Clone the repository and install packages required.
-    ```bash
-    mkdir -p /opt/code/github/AhmedHanafy725
-    cd /opt/code/github/AhmedHanafy725
-    git clone https://github.com/AhmedHanafy725/zeroCI.git --branch cleanup
-    cd zeroCI
-    pip3 install -r install/requirement.txt
-    ```
-
-#### Configuration:
-
-- config.toml:
-
-```
-[main]
-domain=                             # The domain that will point to your server
-result_path=                        # The result log file will stored in
-
-[telegram]
-chat_id=                            # Telegram chat ID
-token=                              # Telegram bot token
-
-[iyo]
-id=                                 # itsyouonline ID
-secret=                             # itsyouonline secret
-
-[github]
-access_token=                       # Github access token for user
-repos=                               # list of  repositories Full name that will run on your zeroCI
-
-[db]
-name=                               # db name will be used to store the result in
-host=                               # hostname that mongodb is running on (exp: localhost)
-port=                               # port that mongodb is running on
-
-[environment]                       # under this a list of environment variables needed to be exported before running tests.
-```
-
-#### How to run the server:
-
-```bash
-bash install/run.sh
-```
+For [installation and running](/install/README.md)
 
 ### Github repository configuration:
 
@@ -180,3 +131,7 @@ For more details about the plugin [junitxml](https://docs.pytest.org/en/latest/u
 ### Nightly tests:
 
 There is an API for adding nightly testsuite, but its page not added yet.
+
+
+### Roadmap
+Using more of jsx tools as soon as there is a stable release.
