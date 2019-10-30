@@ -11,7 +11,7 @@ class ConfigurationError(Exception):
 
 class Configs:
     def __init__(self, **kwargs):
-        self._config = self._from_file("config.toml")
+        self._config = self._from_file("../config.toml")
         self._load()
 
     def _load(self):
