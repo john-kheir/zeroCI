@@ -33,6 +33,7 @@ Go to the repository's setting to configure the webhook:
   - `install`: list of bash commands required to install the project.
   - `script`: list of bash commands needed to run the tests ([more details](#zeroci-script-configuration)).
 
+  (**Note:** RUT location will be in `/opt/code/github/<organization's name>/<repository's name>`)
 ![zeroci](/docs/Images/zeroci.png)
 
 #### 3- Update ZeroCI [config.toml](config.toml)

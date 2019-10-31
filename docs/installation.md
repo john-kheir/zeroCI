@@ -1,5 +1,6 @@
 ## Installation and running
-### Requirements:
+
+### Requirements
 
 - Create a vm with Ubuntu:18.04.
 - Install [JSX](https://github.com/threefoldtech/jumpscaleX_core/tree/development/docs/Installation)
@@ -7,6 +8,7 @@
 - Create Telegram bot and add it to this group chat.
 - Install redis and mongodb `apt-get install -y redis mongodb`
 - Clone the repository and install packages required.
+
     ```bash
     mkdir -p /sandbox/code/github/threefoldtech
     cd /sandbox/code/github/threefoldtech
@@ -15,11 +17,20 @@
     pip3 install -r install/requirement.txt
     ```
 
-### Configuration:
+- frontend requirements
+  
+  ```bash
+  apt-get install -y nodejs npm
+  cd /sandbox/code/github/threefoldtech/zeroCI/frontend
+  npm install
+  npm run build
+  ```
+
+### Configuration
 
 - config.toml:
 
-```
+```toml
 [main]
 domain=                             # The domain that will point to your server
 result_path=                        # The result log file will stored in
@@ -44,7 +55,7 @@ port=                               # port that mongodb is running on
 [environment]                       # under this a list of environment variables needed to be exported before running tests.
 ```
 
-### How to run the server:
+### How to run the server
 
 ```bash
 bash install/run.sh
