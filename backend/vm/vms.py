@@ -1,11 +1,12 @@
-from utils.utils import Utils
-from Jumpscale import j
-from urllib.parse import urlparse
-import random
 import os
 import time
-import paramiko
+import random
+from urllib.parse import urlparse
 
+import paramiko
+from Jumpscale import j
+
+from utils.utils import Utils
 
 RETRIES = 5
 
@@ -189,6 +190,8 @@ class VMS(Utils):
                 )
                 break
             except:
+                if self.media:
+                    self.node.client.bash("rm -rf {}".format(self.disk_path)).get()
                 time.sleep(1)
                 self.vm_uuid = None
 

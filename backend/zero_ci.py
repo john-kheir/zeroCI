@@ -107,19 +107,21 @@ def add_project():
                 )
             except:
                 return Response("Wrong time format should be like (0 * * * *)", 400)
-            return Response("Added", 200)
+            return Response("Added", 201)
         else:
-            return Response("Authentication failed", 400)
+            return Response("Authentication failed", 401)
     return Response("", 404)
 
 
-@app.route("/api/remove_project", methods=["POST"])
+@app.route("/api/remove_project", methods=["DELETE"])
 def remove_project():
     if request.headers.get("Content-Type") == "application/json":
         project_name = request.json.get("project_name")
         authentication = request.json.get("authentication")
         if authentication == configs.github_token:
             scheduler.cancel(project_name)
+        else:
+            return Response("Authentication failed", 401)
         return "Removed", 200
 
 
