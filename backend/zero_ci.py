@@ -167,7 +167,11 @@ def branch(repo):
             )
         result = json.dumps(details)
         return result
-    branches = RepoRun.objects(repo=repo).distinct("branch")
+
+    exist_branches = github.get_branches()
+    all_branches = RepoRun.objects(repo=repo).distinct("branch")
+    deleted_branches = list(set(all_branches) - set(exist_branches))
+    branches = {"exist": exist_branches, "deleted": deleted_branches}
     result = json.dumps(branches)
     return result
 

@@ -8,7 +8,7 @@ from Jumpscale import j
 
 from utils.utils import Utils
 
-RETRIES = 5
+RETRIES = 10
 
 
 class Complete_Executuion:

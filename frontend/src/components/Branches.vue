@@ -20,6 +20,12 @@
                     <router-link :to="'/repos/' + repoName + '/' + branch">{{branch}}</router-link>
                   </li>
                 </ul>
+                <h4 style="color:red">Deleted:</h4>
+                <ul v-for="(branch, key) in deleted" :key="key">
+                  <li>
+                    <router-link :to="'/repos/' + repoName + '/' + branch">{{branch}}</router-link>
+                  </li>
+                </ul>
                 <!-- END PANEL HEADLINE -->
                 <!-- END MAIN CONTENT -->
               </div>
@@ -39,6 +45,7 @@ export default {
   data() {
     return {
       branches: null,
+      deleted: null,
       loading: false
     };
   },
@@ -50,6 +57,7 @@ export default {
   methods: {
     clear() {
       this.branches = null;
+      this.deleted = null;
     },
     getBranches(name) {
       this.loading = true; //the loading begin
@@ -58,7 +66,8 @@ export default {
         .get(path)
         .then(response => {
           this.loading = false;
-          this.branches = response.data;
+          this.branches = response.data.exist;
+          this.deleted = response.data.deleted;
         })
         .catch(error => {
           this.loading = false;

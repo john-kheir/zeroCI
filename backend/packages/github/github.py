@@ -90,3 +90,23 @@ class Github(Configs):
             test_script = yaml_script.get("script")
             return prequisties, install_script, test_script
         return None, None, None
+
+    def get_branches(self, repo):
+        """Get all branches names in a repository.
+
+        :param repo: full repo name
+        :type repo: str
+        :return type: list
+        """
+        branches_names = []
+        for _ in range(RETRIES):
+            try:
+                repo_obj = self.github_cl.get_repo(repo)
+                branches = repo_obj.get_branches()
+            except:
+                time.sleep(0.1)
+
+            for branch in branches:
+                branches_names.append(branch.name)
+
+            return branches_names
