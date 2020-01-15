@@ -15,15 +15,15 @@
               <div class="panel-body">
                 <!-- PANEL HEADLINE -->
                 <h4>Branches:</h4>
-                <ul v-for="(branch, key) in branches" :key="key">
-                  <li>
+                <ul >
+                  <li v-for="(branch, key) in branches" :key="key + 'a'">
                     <router-link :to="'/repos/' + repoName + '/' + branch">{{branch}}</router-link>
                   </li>
                 </ul>
                 <h4 style="color:red">Deleted:</h4>
-                <ul v-for="(branch, key) in deleted" :key="key">
-                  <li>
-                    <router-link :to="'/repos/' + repoName + '/' + branch">{{branch}}</router-link>
+                <ul >
+                  <li v-for="(del, key) in deleted" :key="key">
+                    <router-link :to="'/repos/' + repoName + '/' + del">{{del}}</router-link>
                   </li>
                 </ul>
                 <!-- END PANEL HEADLINE -->
