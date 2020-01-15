@@ -12,7 +12,7 @@ class RepoRun(Document):
     committer = fields.StringField()
     result = fields.ListField(default=[])
 
-    meta = {"collection": "repo"}
+    meta = {"collection": "repo", "indexes": ["timestamp"]}
 
 
 class ProjectRun(Document):
@@ -21,7 +21,7 @@ class ProjectRun(Document):
     name = fields.StringField()
     result = fields.ListField(default=[])
 
-    meta = {"collection": "project"}
+    meta = {"collection": "project", "indexes": ["timestamp"]}
 
 
 class DB(Configs):
