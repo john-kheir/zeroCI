@@ -256,7 +256,7 @@ class VMS(Utils):
         apt-get update &&
         apt-get install -y git python3.6 python3-pip software-properties-common &&
         apt-get install -y --reinstall python3-apt &&
-        pip3 install black &&
+        pip3 install black==19.10b0 &&
         wget http://archive.ubuntu.com/ubuntu/pool/main/libs/libseccomp/libseccomp2_2.4.1-0ubuntu0.18.04.2_amd64.deb -O libseccomp.deb &&
         dpkg -i libseccomp.deb &&
         """
