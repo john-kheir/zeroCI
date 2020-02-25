@@ -21,7 +21,7 @@ actions = Actions()
 github = Github()
 DB()
 
-app = Flask(__name__, static_folder="./dist/static", template_folder="./dist")
+app = Flask(__name__, static_folder="../dist/static", template_folder="../dist")
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
